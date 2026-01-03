@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.pyright/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project-specific data (stored alongside photos)
+.fastlrsearch/
+
+# Local config
+*.local.json
+
+# Consensus (Claude Code skill)
+consensus_docs/
+consensus.py
+consensus_config.json
+
+# Archive (old specs/plans)
+archive/
+
+# Claude Code
+CLAUDE.md
+.claude/
+
+# Environment/secrets
+.env
+.env.*
+
+# Log files
+*.log
+
+# PyInstaller (contains local paths)
+*.spec
+
+# Firebase
+firebase-debug.log
+.firebase/
