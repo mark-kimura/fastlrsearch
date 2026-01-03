@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QSpinBox,
     QVBoxLayout,
 )
 
@@ -134,6 +135,25 @@ class PreferencesDialog(QDialog):
 
         layout.addWidget(index_group)
 
+        # === API Server Group ===
+        api_group = QGroupBox("API Server")
+        api_layout = QFormLayout(api_group)
+        api_layout.setSpacing(12)
+
+        self.api_port_spin = QSpinBox()
+        self.api_port_spin.setRange(1024, 65535)
+        self.api_port_spin.setValue(settings.api_port)
+        self.api_port_spin.setToolTip("Port for the API server (requires restart)")
+        api_layout.addRow("Port:", self.api_port_spin)
+
+        api_info = QLabel(f"API server runs at http://localhost:{settings.api_port}")
+        api_info.setStyleSheet("color: #888; font-size: 11px;")
+        api_layout.addRow("", api_info)
+        self.api_info_label = api_info
+        self.api_port_spin.valueChanged.connect(self._update_api_info)
+
+        layout.addWidget(api_group)
+
         # Spacer
         layout.addStretch()
 
@@ -174,6 +194,11 @@ class PreferencesDialog(QDialog):
         else:
             default_path = Path(photo_root) / ".fastlrsearch" if photo_root else "(unknown)"
             self.data_info_label.setText(f"Using default: {default_path}")
+
+    def _update_api_info(self):
+        """Update the API info label when port changes."""
+        port = self.api_port_spin.value()
+        self.api_info_label.setText(f"API server runs at http://localhost:{port}")
 
     def _browse_photo_root(self):
         """Open directory picker for photo root."""
@@ -294,11 +319,16 @@ class PreferencesDialog(QDialog):
         elif "data_dir_override" in existing:
             del existing["data_dir_override"]
 
+        # API port
+        new_api_port = self.api_port_spin.value()
+        existing["api_port"] = new_api_port
+
         # Write back
         config_file.write_text(json.dumps(existing, indent=2))
 
         # Update runtime settings
         settings.photo_root = new_photo_root
         settings.data_dir_override = new_data_dir
+        settings.api_port = new_api_port
 
         return True

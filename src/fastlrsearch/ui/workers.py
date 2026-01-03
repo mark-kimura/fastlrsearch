@@ -243,7 +243,13 @@ class ModelLoadWorker(QRunnable):
                 embedder = get_embedder()
                 # Force model load (this triggers download if not cached)
                 _ = embedder.model
-                self.signals.result.emit("Embedder loaded")
+
+                # Warm up with a full search to initialize everything
+                self.signals.status.emit("Warming up...")
+                from fastlrsearch.search import hybrid_search
+                _ = hybrid_search("warmup", limit=1)
+
+                self.signals.result.emit("Ready")
             elif self.model_type == "captioner":
                 from fastlrsearch.ingestion import get_captioner
 

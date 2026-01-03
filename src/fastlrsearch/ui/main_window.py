@@ -56,7 +56,7 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self):
         self.setWindowTitle("FastLRSearch")
-        self.setMinimumSize(1200, 800)
+        self.setMinimumSize(1280, 720)  # 16:9 aspect ratio
 
         # Enable drag and drop
         self.setAcceptDrops(True)
@@ -126,13 +126,13 @@ class MainWindow(QMainWindow):
         self.column_slider = QSlider(Qt.Orientation.Horizontal)
         self.column_slider.setMinimum(2)
         self.column_slider.setMaximum(10)
-        self.column_slider.setValue(4)  # Default 4 columns
+        self.column_slider.setValue(5)  # Default 5 columns
         self.column_slider.setMaximumWidth(150)
         self.column_slider.setToolTip("Number of columns")
         self.column_slider.valueChanged.connect(self._on_column_count_changed)
         controls_layout.addWidget(self.column_slider)
 
-        self.column_label = QLabel("4")
+        self.column_label = QLabel("5")
         self.column_label.setMinimumWidth(25)
         controls_layout.addWidget(self.column_label)
 
