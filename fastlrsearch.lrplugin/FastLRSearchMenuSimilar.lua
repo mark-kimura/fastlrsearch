@@ -291,8 +291,9 @@ local function doFindSimilar()
             return
         end
 
-        -- Update limit from dialog
+        -- Update limit from dialog (request 20% more to account for photos not in catalog)
         local limit = props.resultLimit
+        local requestLimit = math.ceil(limit * 1.2)
 
         -- Perform search
         local progress = LrProgressScope {
@@ -301,7 +302,7 @@ local function doFindSimilar()
         }
         progress:setCancelable(false)
 
-        local searchResult, err = FastLRSearchAPI.findSimilar(relativePath, limit)
+        local searchResult, err = FastLRSearchAPI.findSimilar(relativePath, requestLimit)
 
         if err then
             progress:done()
@@ -320,6 +321,13 @@ local function doFindSimilar()
         -- Find photos in catalog (skipping the source photo)
         local photos, notFound = findPhotosInCatalog(catalog, searchResult.results, targetPath)
         local totalResults = #searchResult.results - 1  -- Exclude source photo
+
+        -- Trim to requested limit (we over-requested by 20%)
+        local trimmedPhotos = {}
+        for i = 1, math.min(#photos, limit) do
+            table.insert(trimmedPhotos, photos[i])
+        end
+        photos = trimmedPhotos
 
         if #photos == 0 and #notFound == 0 then
             progress:done()
@@ -349,33 +357,6 @@ local function doFindSimilar()
         local collection = createResultsCollection(catalog, collectionSet, collectionName, photos)
 
         progress:done()
-
-        -- Report results
-        local message
-        if #notFound > 0 then
-            -- Build list of first few not-found paths for debugging
-            local notFoundSample = ""
-            for i = 1, math.min(5, #notFound) do
-                notFoundSample = notFoundSample .. "\n  • " .. notFound[i]
-            end
-            if #notFound > 5 then
-                notFoundSample = notFoundSample .. "\n  ... and " .. (#notFound - 5) .. " more"
-            end
-
-            message = string.format(
-                "Found %d similar photos (of %d results).\n" ..
-                "%d photos were not found in the catalog:%s\n\n" ..
-                "Collection created: %s",
-                #photos, totalResults, #notFound, notFoundSample, collectionName
-            )
-        else
-            message = string.format(
-                "Found %d similar photos.\n\nCollection created: %s",
-                #photos, collectionName
-            )
-        end
-
-        LrDialogs.message("Find Similar Complete", message, "info")
 
         -- Select the collection in the library
         if collection then

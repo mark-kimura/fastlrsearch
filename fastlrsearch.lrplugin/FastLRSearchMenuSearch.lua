@@ -243,14 +243,16 @@ local function doSearch()
             return
         end
 
-        -- Perform search
+        -- Perform search (request 20% more to account for photos not in catalog)
+        local requestLimit = math.ceil(props.resultLimit * 1.2)
+
         local progress = LrProgressScope {
             title = "Searching...",
             functionContext = context,
         }
         progress:setCancelable(false)
 
-        local searchResult, err = FastLRSearchAPI.search(query, props.resultLimit)
+        local searchResult, err = FastLRSearchAPI.search(query, requestLimit)
 
         if err then
             progress:done()
@@ -269,6 +271,13 @@ local function doSearch()
         -- Find photos in catalog
         local photos, notFound = findPhotosInCatalog(catalog, searchResult.results)
         local totalResults = #searchResult.results
+
+        -- Trim to requested limit (we over-requested by 20%)
+        local trimmedPhotos = {}
+        for i = 1, math.min(#photos, props.resultLimit) do
+            table.insert(trimmedPhotos, photos[i])
+        end
+        photos = trimmedPhotos
 
         if #photos == 0 then
             progress:done()
@@ -292,33 +301,6 @@ local function doSearch()
         local collection = createResultsCollection(catalog, collectionSet, collectionName, photos)
 
         progress:done()
-
-        -- Report results
-        local message
-        if #notFound > 0 then
-            -- Build list of first few not-found paths for debugging
-            local notFoundSample = ""
-            for i = 1, math.min(5, #notFound) do
-                notFoundSample = notFoundSample .. "\n  • " .. notFound[i]
-            end
-            if #notFound > 5 then
-                notFoundSample = notFoundSample .. "\n  ... and " .. (#notFound - 5) .. " more"
-            end
-
-            message = string.format(
-                "Found %d photos (of %d results).\n" ..
-                "%d photos were not found in the catalog:%s\n\n" ..
-                "Collection created: %s",
-                #photos, totalResults, #notFound, notFoundSample, collectionName
-            )
-        else
-            message = string.format(
-                "Found %d photos.\n\nCollection created: %s",
-                #photos, collectionName
-            )
-        end
-
-        LrDialogs.message("Search Complete", message, "info")
 
         -- Select the collection in the library
         if collection then

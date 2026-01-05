@@ -86,7 +86,8 @@ def hybrid_search(
         List of SearchResult with metadata
     """
     limit = limit or settings.default_results
-    k_vec = k_vec or settings.search_k_vec
+    # Ensure k_vec is at least as large as limit (so we have enough candidates)
+    k_vec = max(k_vec or settings.search_k_vec, limit)
     k_text = k_text or settings.search_k_text
 
     # Collect results from each source
@@ -163,8 +164,9 @@ def image_search(
     """
     limit = limit or settings.default_results
 
-    # Get image search results
-    image_results = search_by_image(image, limit=settings.search_k_vec, offset=offset, threshold=threshold)
+    # Get image search results (fetch at least as many as requested)
+    k_vec = max(settings.search_k_vec, limit)
+    image_results = search_by_image(image, limit=k_vec, offset=offset, threshold=threshold)
 
     # If no text query, just return image results
     if not query:
