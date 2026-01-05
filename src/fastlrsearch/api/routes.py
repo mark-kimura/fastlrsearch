@@ -171,7 +171,13 @@ async def search_similar_by_path(
 
     Accepts relative paths for cross-platform compatibility.
     Path is relative to the server's configured photo_root.
+
+    Uses fast path (pre-computed vector) for indexed photos,
+    falls back to slow path (re-embed) for unindexed photos.
     """
+    from fastlrsearch.search import SearchResult
+    from fastlrsearch.search.vector_search import search_by_photo_id
+
     image_path = settings.photo_root / path
 
     if not image_path.exists():
@@ -180,6 +186,39 @@ async def search_similar_by_path(
             detail=f"File not found: {image_path} (relative path: {path})"
         )
 
+    # FAST PATH: Try to use pre-computed vector if photo is indexed
+    store = get_sqlite_store()
+    record = store.get_photo_by_path(path)
+
+    if record:
+        raw_results = search_by_photo_id(
+            record.photo_id,
+            limit=limit,
+            threshold=threshold,
+        )
+        if raw_results:
+            # Convert raw results to SearchResult objects with metadata
+            results = []
+            for pid, score in raw_results[:limit]:
+                meta = store.get_photo(pid)
+                results.append(
+                    SearchResult(
+                        photo_id=pid,
+                        score=score,
+                        path=meta.path if meta else None,
+                        caption=meta.caption if meta else None,
+                        tags=meta.tags if meta else None,
+                        vector_score=score,
+                    )
+                )
+
+            return SearchResponse(
+                query=f"(similar to: {image_path.name})",
+                total=len(results),
+                results=[SearchResultItem.from_result(r) for r in results],
+            )
+
+    # SLOW PATH: Fall back to loading image and computing embedding
     try:
         image = Image.open(image_path)
         image = image.convert("RGB")

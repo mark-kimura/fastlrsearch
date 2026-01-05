@@ -93,3 +93,30 @@ def search_by_vector(
     store = get_qdrant_store()
     vec_list = vector.tolist() if isinstance(vector, np.ndarray) else vector
     return store.search(vec_list, limit=limit, offset=offset, threshold=threshold)
+
+
+def search_by_photo_id(
+    photo_id: str,
+    limit: int | None = None,
+    offset: int = 0,
+    threshold: float | None = None,
+) -> list[tuple[str, float]]:
+    """Search for similar photos using an existing photo's vector.
+
+    Fast path: retrieves pre-computed vector from Qdrant instead of re-embedding.
+    Use this when the photo is already indexed.
+
+    Args:
+        photo_id: ID of the indexed photo to find similar images for
+        limit: Max results
+        offset: Number of results to skip (for pagination)
+        threshold: Minimum similarity
+
+    Returns:
+        List of (photo_id, score) tuples, or empty list if photo not found
+    """
+    store = get_qdrant_store()
+    vector = store.get_vector(photo_id)
+    if vector is None:
+        return []
+    return store.search(vector, limit=limit, offset=offset, threshold=threshold)

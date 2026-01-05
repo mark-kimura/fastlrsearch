@@ -177,7 +177,36 @@ class QdrantStore:
             return [
                 (hit.payload["photo_id"], hit.score)
                 for hit in response.points
+                if hit.payload is not None
             ]
+
+    def get_vector(self, photo_id: str) -> list[float] | None:
+        """Retrieve stored vector for a photo.
+
+        Args:
+            photo_id: Photo identifier
+
+        Returns:
+            Vector as list of floats, or None if not found
+        """
+        point_id = self._hash_id(photo_id)
+        with self._lock:
+            points = self.client.retrieve(
+                collection_name=self.collection_name,
+                ids=[point_id],
+                with_vectors=True,
+            )
+            if points and len(points) > 0:
+                vec = points[0].vector
+                if vec is None:
+                    return None
+                # Handle both dict and list return types from Qdrant
+                if isinstance(vec, dict):
+                    # Named vectors - get the default one
+                    first_vec = list(vec.values())[0] if vec else None
+                    return [float(x) for x in first_vec] if first_vec else None  # type: ignore[union-attr]
+                return [float(x) for x in vec]  # type: ignore[arg-type]
+            return None
 
     def delete(self, photo_id: str):
         """Delete a vector by photo_id.
