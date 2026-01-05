@@ -37,9 +37,17 @@ def normalize_query(query: str) -> str:
     Returns:
         FTS5-safe query string
     """
-    # Remove FTS5 operators if user didn't intend them
-    # Keep simple word queries working naturally
-    words = query.strip().split()
+    import re
+
+    # Strip punctuation that users might include but FTS5 can't handle
+    cleaned = re.sub(r'[,;:!?]+', ' ', query)
+
+    # Split into words and filter empty strings
+    words = cleaned.strip().split()
+    words = [w for w in words if w.strip()]
+
+    if not words:
+        return ""
 
     # If query looks like natural language, use implicit AND
     # FTS5 uses implicit OR by default, but AND is usually what users want
@@ -48,12 +56,16 @@ def normalize_query(query: str) -> str:
         escaped = [_escape_fts_word(w) for w in words]
         return " ".join(escaped)
 
-    return query
+    # Single word - still escape it
+    return _escape_fts_word(words[0]) if len(words) == 1 else query
 
 
 def _escape_fts_word(word: str) -> str:
     """Escape special FTS5 characters in a word."""
-    # FTS5 special chars that need quoting
-    if any(c in word for c in ['"', "'", "(", ")", "*", "-", "+"]):
-        return f'"{word}"'
+    # FTS5 special chars that need quoting: " ' ( ) * - + , : ^
+    special_chars = ['"', "'", "(", ")", "*", "-", "+", ",", ":", "^", "."]
+    if any(c in word for c in special_chars):
+        # Escape internal double quotes by doubling them
+        escaped = word.replace('"', '""')
+        return f'"{escaped}"'
     return word
