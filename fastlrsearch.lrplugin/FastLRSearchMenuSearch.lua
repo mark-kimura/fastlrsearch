@@ -140,6 +140,12 @@ local function findPhotosInCatalog(catalog, results)
     return photos, notFound
 end
 
+-- Check server connection status
+local function checkConnection()
+    local ok, msg = FastLRSearchAPI.healthCheck()
+    return ok, msg
+end
+
 -- Main search function
 local function doSearch()
     LrFunctionContext.postAsyncTaskWithContext("FastLRSearch", function(context)
@@ -156,15 +162,35 @@ local function doSearch()
             return
         end
 
+        -- Check connection status
+        local isConnected, connectionMsg = checkConnection()
+
         -- Create dialog
         local f = LrView.osFactory()
         local props = LrBinding.makePropertyTable(context)
         props.searchQuery = ""
         props.resultLimit = prefs.resultLimit or 50
+        props.connectionStatus = isConnected and "Connected" or "Disconnected"
+        props.isConnected = isConnected
 
         local contents = f:column {
             spacing = f:dialog_spacing(),
             bind_to_object = props,
+
+            -- Connection status indicator
+            f:row {
+                f:static_text {
+                    title = "Server:",
+                    alignment = "right",
+                    width = LrView.share "label_width",
+                },
+                f:static_text {
+                    title = isConnected and "● Connected" or "○ Disconnected",
+                    text_color = LrColor and (isConnected and LrColor(0.2, 0.7, 0.2) or LrColor(0.8, 0.2, 0.2)) or nil,
+                },
+            },
+
+            f:separator { fill_horizontal = 1 },
 
             f:row {
                 f:static_text {

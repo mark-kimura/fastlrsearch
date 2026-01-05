@@ -6,15 +6,27 @@
 local LrApplication = import 'LrApplication'
 local LrDialogs = import 'LrDialogs'
 local LrFunctionContext = import 'LrFunctionContext'
+local LrBinding = import 'LrBinding'
+local LrView = import 'LrView'
 local LrTasks = import 'LrTasks'
 local LrPrefs = import 'LrPrefs'
 local LrProgressScope = import 'LrProgressScope'
 local LrLogger = import 'LrLogger'
 
+-- LrColor may not be available in all LR versions
+local LrColor
+pcall(function() LrColor = import 'LrColor' end)
+
 local FastLRSearchAPI = require 'FastLRSearchAPI'
 
 local logger = LrLogger('FastLRSearch')
 logger:enable("logfile")
+
+-- Check server connection status
+local function checkConnection()
+    local ok, msg = FastLRSearchAPI.healthCheck()
+    return ok, msg
+end
 
 -- Create or get the FastLRSearch collection set
 local function getOrCreateCollectionSet(catalog)
@@ -211,6 +223,77 @@ local function doFindSimilar()
             return
         end
 
+        -- Check connection status
+        local isConnected, connectionMsg = checkConnection()
+
+        -- Show confirmation dialog with connection status
+        local f = LrView.osFactory()
+        local props = LrBinding.makePropertyTable(context)
+        props.resultLimit = prefs.resultLimit or 50
+
+        local contents = f:column {
+            spacing = f:dialog_spacing(),
+            bind_to_object = props,
+
+            -- Connection status indicator
+            f:row {
+                f:static_text {
+                    title = "Server:",
+                    alignment = "right",
+                    width = LrView.share "label_width",
+                },
+                f:static_text {
+                    title = isConnected and "● Connected" or "○ Disconnected",
+                    text_color = LrColor and (isConnected and LrColor(0.2, 0.7, 0.2) or LrColor(0.8, 0.2, 0.2)) or nil,
+                },
+            },
+
+            f:separator { fill_horizontal = 1 },
+
+            f:row {
+                f:static_text {
+                    title = "Photo:",
+                    alignment = "right",
+                    width = LrView.share "label_width",
+                },
+                f:static_text {
+                    title = filename,
+                    width_in_chars = 40,
+                    truncation = "middle",
+                },
+            },
+
+            f:row {
+                f:static_text {
+                    title = "Max results:",
+                    alignment = "right",
+                    width = LrView.share "label_width",
+                },
+                f:popup_menu {
+                    value = LrView.bind 'resultLimit',
+                    items = {
+                        { title = "20", value = 20 },
+                        { title = "50", value = 50 },
+                        { title = "100", value = 100 },
+                        { title = "200", value = 200 },
+                    },
+                },
+            },
+        }
+
+        local dialogResult = LrDialogs.presentModalDialog {
+            title = "FastLRSearch - Find Similar",
+            contents = contents,
+            actionVerb = "Find Similar",
+        }
+
+        if dialogResult ~= "ok" then
+            return
+        end
+
+        -- Update limit from dialog
+        local limit = props.resultLimit
+
         -- Perform search
         local progress = LrProgressScope {
             title = string.format("Finding photos similar to %s...", filename),
@@ -218,7 +301,6 @@ local function doFindSimilar()
         }
         progress:setCancelable(false)
 
-        local limit = prefs.resultLimit or 50
         local searchResult, err = FastLRSearchAPI.findSimilar(relativePath, limit)
 
         if err then
