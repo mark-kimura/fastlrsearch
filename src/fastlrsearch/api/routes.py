@@ -163,19 +163,22 @@ async def search_by_image(
 
 @router.get("/search/similar", response_model=SearchResponse)
 async def search_similar_by_path(
-    path: str = Query(..., description="Absolute path to reference image"),
+    path: str = Query(..., description="Relative path to reference image (relative to photo_root)"),
     limit: int = Query(50, ge=1, le=500, description="Max results"),
     threshold: float = Query(0.0, ge=0.0, le=1.0, description="Min similarity"),
 ):
     """Search for similar photos by file path.
 
-    Designed for Lightroom plugin integration where both apps
-    are on the same machine and see the same file paths.
+    Accepts relative paths for cross-platform compatibility.
+    Path is relative to the server's configured photo_root.
     """
-    image_path = Path(path)
+    image_path = settings.photo_root / path
 
     if not image_path.exists():
-        raise HTTPException(status_code=404, detail=f"File not found: {path}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"File not found: {image_path} (relative path: {path})"
+        )
 
     try:
         image = Image.open(image_path)

@@ -80,6 +80,24 @@ local function detectPhotoRoot(catalog)
     return nil
 end
 
+-- Extract relative path from absolute path using photo root
+local function extractRelativePath(absolutePath, photoRoot)
+    if not photoRoot or photoRoot == "" then
+        return nil
+    end
+
+    -- Normalize both paths to use forward slashes for comparison
+    local normAbsolute = absolutePath:gsub("\\", "/")
+    local normRoot = photoRoot:gsub("\\", "/"):gsub("/$", "") .. "/"
+
+    -- Check if absolute path starts with photo root
+    if normAbsolute:sub(1, #normRoot):lower() == normRoot:lower() then
+        return normAbsolute:sub(#normRoot + 1)
+    end
+
+    return nil
+end
+
 -- Build absolute path from relative path using detected or configured photo root
 local function buildAbsolutePath(relativePath, photoRoot)
     if not photoRoot or photoRoot == "" then
@@ -151,9 +169,9 @@ local function doFindSimilar()
             return
         end
 
-        -- Get selected photo
-        local selectedPhotos = catalog:getTargetPhotos()
-        if not selectedPhotos or #selectedPhotos == 0 then
+        -- Get the primary selected photo (the "most selected" one)
+        local targetPhoto = catalog:getTargetPhoto()
+        if not targetPhoto then
             LrDialogs.message(
                 "No Photo Selected",
                 "Please select a photo to find similar images.",
@@ -162,8 +180,6 @@ local function doFindSimilar()
             return
         end
 
-        -- Use first selected photo
-        local targetPhoto = selectedPhotos[1]
         local targetPath = targetPhoto:getRawMetadata('path')
 
         if not targetPath then
@@ -178,6 +194,23 @@ local function doFindSimilar()
         -- Get filename for display
         local filename = targetPath:match("([^/\\]+)$") or targetPath
 
+        -- Extract relative path for cross-platform compatibility
+        local photoRoot = detectPhotoRoot(catalog)
+        local relativePath = extractRelativePath(targetPath, photoRoot)
+
+        if not relativePath then
+            LrDialogs.message(
+                "Cannot Determine Relative Path",
+                string.format(
+                    "Could not extract relative path from:\n%s\n\nPhoto root: %s\n\n" ..
+                    "Please configure Photo Root in Plugin Manager to match your Lightroom folder structure.",
+                    targetPath, photoRoot or "(not detected)"
+                ),
+                "critical"
+            )
+            return
+        end
+
         -- Perform search
         local progress = LrProgressScope {
             title = string.format("Finding photos similar to %s...", filename),
@@ -186,7 +219,7 @@ local function doFindSimilar()
         progress:setCancelable(false)
 
         local limit = prefs.resultLimit or 50
-        local searchResult, err = FastLRSearchAPI.findSimilar(targetPath, limit)
+        local searchResult, err = FastLRSearchAPI.findSimilar(relativePath, limit)
 
         if err then
             progress:done()
