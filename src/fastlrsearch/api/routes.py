@@ -22,6 +22,19 @@ from fastlrsearch.search import SearchResult, hybrid_search, image_search
 router = APIRouter()
 
 
+def _build_absolute_path(relative_path: str) -> str:
+    """Build absolute path, using api_photo_root override if configured."""
+    if settings.api_photo_root:
+        # Join with forward slashes, then convert to backslash if Windows path
+        base = settings.api_photo_root.rstrip("/\\")
+        abs_path = f"{base}/{relative_path}"
+        if "\\" in base:  # Windows-style path
+            abs_path = abs_path.replace("/", "\\")
+        return abs_path
+    else:
+        return str(settings.photo_root / relative_path)
+
+
 class HealthResponse(BaseModel):
     """Health check response."""
 
@@ -45,7 +58,7 @@ class SearchResultItem(BaseModel):
         """Create from SearchResult."""
         abs_path = None
         if result.path:
-            abs_path = str(settings.photo_root / result.path)
+            abs_path = _build_absolute_path(result.path)
 
         thumb_url = None
         cache = get_thumbnail_cache()
@@ -148,6 +161,42 @@ async def search_by_image(
     )
 
 
+@router.get("/search/similar", response_model=SearchResponse)
+async def search_similar_by_path(
+    path: str = Query(..., description="Absolute path to reference image"),
+    limit: int = Query(50, ge=1, le=500, description="Max results"),
+    threshold: float = Query(0.0, ge=0.0, le=1.0, description="Min similarity"),
+):
+    """Search for similar photos by file path.
+
+    Designed for Lightroom plugin integration where both apps
+    are on the same machine and see the same file paths.
+    """
+    image_path = Path(path)
+
+    if not image_path.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {path}")
+
+    try:
+        image = Image.open(image_path)
+        image = image.convert("RGB")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Cannot open image: {e}")
+
+    results = image_search(
+        image=image,
+        query=None,
+        limit=limit,
+        threshold=threshold,
+    )
+
+    return SearchResponse(
+        query=f"(similar to: {image_path.name})",
+        total=len(results),
+        results=[SearchResultItem.from_result(r) for r in results],
+    )
+
+
 @router.get("/photo/{photo_id}", response_model=PhotoResponse)
 async def get_photo(photo_id: str):
     """Get photo details by ID."""
@@ -157,7 +206,7 @@ async def get_photo(photo_id: str):
     if record is None:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    abs_path = str(settings.photo_root / record.path)
+    abs_path = _build_absolute_path(record.path)
 
     thumb_url = None
     cache = get_thumbnail_cache()

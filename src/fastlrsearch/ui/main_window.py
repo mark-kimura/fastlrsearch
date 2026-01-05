@@ -38,7 +38,7 @@ from fastlrsearch.ui.workers import (
 class MainWindow(QMainWindow):
     """Main application window."""
 
-    def __init__(self):
+    def __init__(self, api_token: str | None = None):
         super().__init__()
         self._thread_pool = QThreadPool.globalInstance()
         self._ingestion_worker: IngestionWorker | None = None
@@ -49,6 +49,7 @@ class MainWindow(QMainWindow):
         # Track current search for server-side pagination
         self._current_query: str | None = None
         self._current_image_path: Path | None = None
+        self._api_token = api_token
         self._setup_ui()
         self._setup_menu()
         self._load_model_async()
@@ -99,7 +100,7 @@ class MainWindow(QMainWindow):
         clear_action = self.search_input.addAction(
             QIcon(pixmap), QLineEdit.ActionPosition.TrailingPosition
         )
-        clear_action.triggered.connect(self.search_input.clear)
+        clear_action.triggered.connect(self._on_clear_search)
 
         # Make the action icon larger via textMargins to give it more space
         self.search_input.setTextMargins(8, 0, 32, 0)
@@ -231,6 +232,12 @@ class MainWindow(QMainWindow):
         stats_action.triggered.connect(self._show_stats)
         tools_menu.addAction(stats_action)
 
+        tools_menu.addSeparator()
+
+        copy_token_action = QAction("Copy API Token", self)
+        copy_token_action.triggered.connect(self._copy_api_token)
+        tools_menu.addAction(copy_token_action)
+
         # Help menu
         help_menu = menu_bar.addMenu("Help")
 
@@ -290,6 +297,18 @@ class MainWindow(QMainWindow):
         except Exception:
             # Don't crash on startup if checkpoint check fails
             pass
+
+    @Slot()
+    def _on_clear_search(self):
+        """Handle clear button - clears text and results."""
+        self.search_input.clear()
+        self._current_query = None
+        self._current_image_path = None
+        self._current_results = []
+        self._current_page = 0
+        self.results_grid.clear()
+        self.details_panel.clear()
+        self._update_pagination_controls()
 
     @Slot()
     def _on_search(self):
@@ -482,6 +501,27 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "Index Statistics", stats)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to get stats: {e}")
+
+    def _copy_api_token(self):
+        """Copy API token to clipboard for Lightroom plugin."""
+        from PySide6.QtWidgets import QApplication
+
+        if self._api_token:
+            QApplication.clipboard().setText(self._api_token)
+            QMessageBox.information(
+                self,
+                "API Token Copied",
+                "The API token has been copied to clipboard.\n\n"
+                "Paste it in the Lightroom plugin settings\n"
+                "(File > Plug-in Manager > FastLRSearch).",
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                "API Token Not Available",
+                "The API server is not running.\n"
+                "Token is not available.",
+            )
 
     def _show_about(self):
         """Show about dialog."""

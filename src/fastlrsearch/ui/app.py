@@ -25,13 +25,14 @@ def run_app() -> int:
     _apply_dark_palette(app)
 
     # Start API server in background
+    api_token = None
     try:
-        start_server()
+        api_token = start_server()
     except Exception as e:
         print(f"Warning: Failed to start API server: {e}")
 
     # Create and show main window
-    window = MainWindow()
+    window = MainWindow(api_token=api_token)
     window.show()
 
     return app.exec()

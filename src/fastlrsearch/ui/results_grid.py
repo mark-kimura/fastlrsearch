@@ -128,7 +128,7 @@ class ResultsGrid(QScrollArea):
         self._results: list[SearchResult] = []
         self._widgets: dict[str, ThumbnailWidget] = {}
         self._thread_pool = QThreadPool.globalInstance()
-        self._column_count = 4  # Default columns
+        self._column_count = 5  # Default columns (must match main_window slider)
         self._thumb_size = settings.thumbnail_size
         self._setup_ui()
 

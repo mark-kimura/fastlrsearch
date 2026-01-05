@@ -163,10 +163,22 @@ class Settings(BaseSettings):
         default=17831,
         description="API server port",
     )
-    api_discovery_path: Path = Field(
-        default=Path.home() / ".local/share/fastlrsearch/api.json",
-        description="Path to API discovery file for Lightroom plugin",
+    api_photo_root: str | None = Field(
+        default=None,
+        description="Override photo_root for API responses (e.g., 'Z:\\' for Windows clients)",
     )
+    @property
+    def api_discovery_path(self) -> Path:
+        """Path to API discovery file for Lightroom plugin (cross-platform)."""
+        import sys
+        if sys.platform == "win32":
+            # Windows: %LOCALAPPDATA%\fastlrsearch\api.json
+            import os
+            local_app_data = os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")
+            return Path(local_app_data) / "fastlrsearch" / "api.json"
+        else:
+            # Linux/macOS: ~/.local/share/fastlrsearch/api.json
+            return Path.home() / ".local" / "share" / "fastlrsearch" / "api.json"
 
     # === UI ===
     ui_grid_columns: int = Field(

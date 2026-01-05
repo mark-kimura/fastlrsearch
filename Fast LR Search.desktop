@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=FastLRSearch
+Comment=Fast offline semantic photo search
+Exec=/home/mkimura/Dropbox/Personal_projects/fastPhotoSearch/run.sh
+Icon=photolayoutseditor
+Terminal=false
+Type=Application
+Categories=Graphics;Photography;
+Name[en_US]=Fast LR Search
