@@ -8,6 +8,7 @@ Fast offline semantic photo search for large photo libraries. Find photos by des
 
 - **Semantic search** - Search by natural language ("sunset at the beach", "people laughing", "red car")
 - **Image similarity** - Find visually similar photos by drag & drop or clicking "Find Similar"
+- **Lightroom Classic integration** - Search directly from Lightroom via plugin
 - **Multilingual** - Search in English, Japanese, Chinese, and other languages (SigLIP 2 is multilingual)
 - **RAW support** - Indexes CR2, DNG, NEF, ARW, RAF alongside JPG/PNG
 - **Offline & private** - Everything runs locally, no cloud services required
@@ -66,6 +67,19 @@ FastLRSearch uses [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch1
 Settings are stored in `~/.config/fastlrsearch/settings.json`.
 
 Index data is stored in `<photo_root>/.fastlrsearch/` by default (portable with your photos).
+
+## Lightroom Classic Plugin
+
+FastLRSearch includes a plugin for Adobe Lightroom Classic, allowing you to search photos directly from Lightroom.
+
+See [fastlrsearch.lrplugin/README.md](fastlrsearch.lrplugin/README.md) for installation and usage instructions.
+
+### Quick Start
+
+1. Copy `fastlrsearch.lrplugin` to your Lightroom plugins folder
+2. Add it via File > Plug-in Manager
+3. Copy the API token from FastLRSearch and paste it in Plugin Manager
+4. Use Library > Plug-in Extras > Search Photos or Find Similar
 
 ## Development
 

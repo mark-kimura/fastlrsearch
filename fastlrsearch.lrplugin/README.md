@@ -5,8 +5,10 @@ A Lightroom Classic plugin for semantic photo search powered by FastLRSearch.
 ## Features
 
 - **Text Search**: Find photos using natural language queries (e.g., "sunset on beach", "people laughing", "mountain landscape")
-- **Find Similar**: Select a photo and find visually similar images
+- **Find Similar**: Select a photo and find visually similar images (fast - uses pre-computed vectors)
+- **Connection Status**: Both dialogs show server connection status before searching
 - **Auto Collection**: Results are automatically added to a collection for easy access
+- **Cross-Platform**: Works with FastLRSearch running on a different machine (e.g., Linux server)
 
 ## Requirements
 
@@ -95,9 +97,12 @@ Results are added to a new collection under **FastLRSearch Results** in the Coll
 
 1. Select a photo in your catalog
 2. Go to **Library > Plug-in Extras > Find Similar to Selected**
-3. The plugin will find visually similar photos
+3. Verify the connection status and selected photo in the confirmation dialog
+4. Adjust result limit if needed and click **Find Similar**
 
 Results are added to a collection named "Similar to: [filename]".
+
+> **Note**: Find Similar is fast for indexed photos because it uses pre-computed vectors instead of re-embedding the image.
 
 ## Troubleshooting
 
