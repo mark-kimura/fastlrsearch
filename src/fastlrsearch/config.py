@@ -100,8 +100,16 @@ class Settings(BaseSettings):
         description="Long side for cached thumbnails (used for preview)",
     )
     supported_extensions: tuple[str, ...] = Field(
-        default=(".jpg", ".jpeg", ".png", ".webp", ".cr2", ".dng", ".nef", ".arw", ".raf"),
+        default=(".jpg", ".jpeg", ".png", ".webp", ".cr2", ".cr3", ".dng", ".nef", ".arw", ".raf", ".rw2", ".orf"),
         description="File extensions to index",
+    )
+    raw_extensions: tuple[str, ...] = Field(
+        default=(".cr2", ".cr3", ".dng", ".nef", ".arw", ".raf", ".rw2", ".orf"),
+        description="RAW file extensions (used for skip_jpeg_if_raw_exists)",
+    )
+    skip_jpeg_if_raw_exists: bool = Field(
+        default=True,
+        description="Skip JPEG/PNG files if a RAW file with same name exists in same folder",
     )
 
     # === GPU / Batching ===

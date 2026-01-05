@@ -353,11 +353,20 @@ local function doFindSimilar()
         -- Report results
         local message
         if #notFound > 0 then
+            -- Build list of first few not-found paths for debugging
+            local notFoundSample = ""
+            for i = 1, math.min(5, #notFound) do
+                notFoundSample = notFoundSample .. "\n  • " .. notFound[i]
+            end
+            if #notFound > 5 then
+                notFoundSample = notFoundSample .. "\n  ... and " .. (#notFound - 5) .. " more"
+            end
+
             message = string.format(
                 "Found %d similar photos (of %d results).\n" ..
-                "%d photos were not found in the catalog.\n\n" ..
+                "%d photos were not found in the catalog:%s\n\n" ..
                 "Collection created: %s",
-                #photos, totalResults, #notFound, collectionName
+                #photos, totalResults, #notFound, notFoundSample, collectionName
             )
         else
             message = string.format(

@@ -42,6 +42,36 @@ def is_supported_extension(path: Path) -> bool:
     return path.suffix.lower() in settings.supported_extensions
 
 
+def has_raw_counterpart(filepath: Path) -> bool:
+    """Check if a RAW file with same base name exists in the same folder.
+
+    Used to skip JPEGs when RAW+JPEG pairs exist.
+    """
+    stem = filepath.stem
+    parent = filepath.parent
+    for raw_ext in settings.raw_extensions:
+        # Check both lowercase and uppercase versions
+        if (parent / f"{stem}{raw_ext}").exists():
+            return True
+        if (parent / f"{stem}{raw_ext.upper()}").exists():
+            return True
+    return False
+
+
+def should_skip_for_raw(filepath: Path) -> bool:
+    """Check if this file should be skipped because a RAW counterpart exists."""
+    if not settings.skip_jpeg_if_raw_exists:
+        return False
+
+    ext = filepath.suffix.lower()
+    # Only skip non-RAW image files (JPEG, PNG, WebP)
+    if ext in settings.raw_extensions:
+        return False
+    if ext in (".jpg", ".jpeg", ".png", ".webp"):
+        return has_raw_counterpart(filepath)
+    return False
+
+
 def scan_directory(
     root: Path | None = None,
     progress_callback: Callable[[int], None] | None = None,
@@ -74,6 +104,10 @@ def scan_directory(
             filepath = Path(dirpath) / filename
 
             if not is_supported_extension(filepath):
+                continue
+
+            # Skip JPEG/PNG if RAW counterpart exists (configurable)
+            if should_skip_for_raw(filepath):
                 continue
 
             try:
@@ -116,6 +150,10 @@ def scan_single_file(filepath: Path, root: Path | None = None) -> ScannedFile | 
     filepath = Path(filepath).resolve()
 
     if not is_supported_extension(filepath):
+        return None
+
+    # Skip JPEG/PNG if RAW counterpart exists (configurable)
+    if should_skip_for_raw(filepath):
         return None
 
     try:
