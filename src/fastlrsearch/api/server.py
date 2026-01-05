@@ -88,6 +88,27 @@ def remove_discovery_file():
         discovery_path.unlink()
 
 
+def _load_or_create_token() -> str:
+    """Load existing token from discovery file or create a new one.
+
+    Token persists across restarts for better UX with Lightroom plugin.
+    """
+    discovery_path = settings.api_discovery_path
+
+    # Try to load existing token
+    if discovery_path.exists():
+        try:
+            with open(discovery_path) as f:
+                data = json.load(f)
+                if "token" in data and data["token"]:
+                    return data["token"]
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    # Generate new token if none exists
+    return secrets.token_urlsafe(32)
+
+
 def start_server(
     host: str | None = None,
     port: int | None = None,
@@ -110,8 +131,8 @@ def start_server(
     host = host or settings.api_host
     port = port or settings.api_port
 
-    # Generate ephemeral session token
-    _session_token = secrets.token_urlsafe(32)
+    # Load existing token or generate new one (persists across restarts)
+    _session_token = _load_or_create_token()
 
     # Write discovery file
     write_discovery_file(port, _session_token)
@@ -148,7 +169,7 @@ def stop_server():
     if _server_instance is not None:
         _server_instance.should_exit = True
 
-    remove_discovery_file()
+    # Don't remove discovery file - keep token for next startup
 
     _server_thread = None
     _server_instance = None
