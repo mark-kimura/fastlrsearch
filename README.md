@@ -1,4 +1,4 @@
-# FastLRSearch
+# FastLRSearch - Semantic Photo Search for Lightroom Classic & Standalone Desktop
 
 Fast offline semantic photo search for large photo libraries. Find photos by describing what you're looking for, or find visually similar images.
 
