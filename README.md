@@ -93,6 +93,8 @@ FastLRSearch uses [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch1
 2. **Start indexing**: Click "Start Indexing" in Preferences (runs in background)
 3. **Search**: Type a description and press Enter, or drag an image to search by similarity
 
+<img src="docs/screenshot-preferences.png" width="400">
+
 ### Keyboard Shortcuts
 
 | Shortcut | Action |
@@ -144,8 +146,10 @@ See [fastlrsearch.lrplugin/README.md](fastlrsearch.lrplugin/README.md) for insta
 
 1. Copy `fastlrsearch.lrplugin` to your Lightroom plugins folder
 2. Add it via File > Plug-in Manager
-3. Copy the API token from FastLRSearch and paste it in Plugin Manager
+3. Copy the API token from FastLRSearch (Tools > Copy API Token) and paste it in Plugin Manager
 4. Use Library > Plug-in Extras > Search Photos or Find Similar
+
+<img src="docs/screenshot-api-token.png" width="280">
 
 ## Development
 
