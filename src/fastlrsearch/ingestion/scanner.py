@@ -112,7 +112,7 @@ def scan_directory(
 
             try:
                 stat = filepath.stat()
-                relative_path = str(filepath.relative_to(root))
+                relative_path = filepath.relative_to(root).as_posix()
 
                 yield ScannedFile(
                     path=filepath,
@@ -158,7 +158,7 @@ def scan_single_file(filepath: Path, root: Path | None = None) -> ScannedFile | 
 
     try:
         stat = filepath.stat()
-        relative_path = str(filepath.relative_to(root))
+        relative_path = filepath.relative_to(root).as_posix()
 
         return ScannedFile(
             path=filepath,

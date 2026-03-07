@@ -9,13 +9,19 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
+import platformdirs
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def _config_dir() -> Path:
+    """Cross-platform config directory for fastlrsearch."""
+    return Path(platformdirs.user_config_dir("fastlrsearch"))
+
+
 def _load_json_settings() -> dict[str, Any]:
     """Load settings from JSON config file."""
-    config_file = Path.home() / ".config" / "fastlrsearch" / "settings.json"
+    config_file = _config_dir() / "settings.json"
     if config_file.exists():
         try:
             return json.loads(config_file.read_text())
@@ -125,9 +131,9 @@ class Settings(BaseSettings):
         default=32,
         description="Minimum batch size after OOM fallback",
     )
-    device: Literal["cuda", "cpu", "auto"] = Field(
+    device: Literal["cuda", "mps", "cpu", "auto"] = Field(
         default="auto",
-        description="Compute device (auto = cuda if available, else cpu)",
+        description="Compute device (auto = cuda if available, then mps, else cpu)",
     )
 
     # === Search Parameters ===
@@ -178,15 +184,7 @@ class Settings(BaseSettings):
     @property
     def api_discovery_path(self) -> Path:
         """Path to API discovery file for Lightroom plugin (cross-platform)."""
-        import sys
-        if sys.platform == "win32":
-            # Windows: %LOCALAPPDATA%\fastlrsearch\api.json
-            import os
-            local_app_data = os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")
-            return Path(local_app_data) / "fastlrsearch" / "api.json"
-        else:
-            # Linux/macOS: ~/.local/share/fastlrsearch/api.json
-            return Path.home() / ".local" / "share" / "fastlrsearch" / "api.json"
+        return Path(platformdirs.user_data_dir("fastlrsearch")) / "api.json"
 
     # === UI ===
     ui_grid_columns: int = Field(
@@ -228,7 +226,11 @@ class Settings(BaseSettings):
         if self.device == "auto":
             import torch
 
-            return "cuda" if torch.cuda.is_available() else "cpu"
+            if torch.cuda.is_available():
+                return "cuda"
+            if torch.backends.mps.is_available():
+                return "mps"
+            return "cpu"
         return self.device
 
 

@@ -294,6 +294,9 @@ class MainWindow(QMainWindow):
 
                 if reply == QMessageBox.StandardButton.Yes:
                     self._do_start_ingestion()
+                else:
+                    # Clear stale checkpoint so it doesn't prompt again
+                    IngestionPipeline.clear_checkpoint_file()
         except Exception:
             # Don't crash on startup if checkpoint check fails
             pass

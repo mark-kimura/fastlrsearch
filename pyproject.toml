@@ -26,7 +26,8 @@ dependencies = [
     # Image processing
     "Pillow>=10.0.0",
     "rawpy>=0.19.0",
-    "numpy>=1.24.0,<2.0.0",  # PySide6 6.4.x requires numpy<2
+    "numpy>=1.24.0,<2.0.0 ; sys_platform == 'linux'",
+    "numpy>=1.24.0 ; sys_platform != 'linux'",
 
     # Hashing & dedup
     "imagehash>=4.3.0",
@@ -35,8 +36,9 @@ dependencies = [
     # EXIF
     "exifread>=3.0.0",
 
-    # UI - pinned to 6.4.x for Fcitx/IME compatibility with system Qt
-    "PySide6>=6.4.0,<6.5.0",
+    # UI - pinned to 6.4.x on Linux for Fcitx/IME compatibility with system Qt
+    "PySide6>=6.4.0,<6.5.0 ; sys_platform == 'linux'",
+    "PySide6>=6.7.0 ; sys_platform != 'linux'",
 
     # API
     "fastapi>=0.109.0",
@@ -47,6 +49,7 @@ dependencies = [
     "tqdm>=4.66.0",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
+    "platformdirs>=4.0.0",
 ]
 
 [project.optional-dependencies]

@@ -1,10 +1,9 @@
 """Details panel for displaying selected photo information."""
 
-import subprocess
 from pathlib import Path
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QResizeEvent
+from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtGui import QDesktopServices, QPixmap, QResizeEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -163,8 +162,7 @@ class DetailsPanel(QFrame):
         if self._result and self._result.path:
             abs_path = settings.photo_root / self._result.path
             if abs_path.exists():
-                # Linux: use xdg-open to open file manager
-                subprocess.run(["xdg-open", str(abs_path.parent)])
+                QDesktopServices.openUrl(QUrl.fromLocalFile(str(abs_path.parent)))
 
     def _on_similar_clicked(self):
         """Trigger find similar search."""

@@ -65,13 +65,18 @@ class Embedder:
 
         self._processor = AutoProcessor.from_pretrained(self.model_name, use_fast=True)
         # Load directly to device to avoid CPU/GPU tensor mismatch
-        self._model = AutoModel.from_pretrained(
-            self.model_name,
-            device_map=self.device if self.device == "cuda" else None,
-            torch_dtype="auto",
-        )
-        if self.device != "cuda":
-            # For CPU, move manually
+        if self.device == "cuda":
+            self._model = AutoModel.from_pretrained(
+                self.model_name,
+                device_map="cuda",
+                torch_dtype="auto",
+            )
+        else:
+            # MPS and CPU: load to CPU first, then move (device_map not supported for MPS)
+            self._model = AutoModel.from_pretrained(
+                self.model_name,
+                torch_dtype="auto",
+            )
             self._model = self._model.to(self.device)
         self._model.eval()
 
@@ -84,7 +89,7 @@ class Embedder:
             del self._processor
             self._model = None
             self._processor = None
-            if self.device == "cuda":
+            if self.device == "cuda" and torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
     def embed_image(self, image: Image.Image) -> np.ndarray:

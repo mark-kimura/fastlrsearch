@@ -1,6 +1,15 @@
 """FastLRSearch UI application entry point."""
 
+import atexit
 import sys
+
+
+def _cleanup():
+    """Close Qdrant and SQLite stores to release file locks."""
+    from fastlrsearch.indexing import close_qdrant_store, close_sqlite_store
+
+    close_qdrant_store()
+    close_sqlite_store()
 
 
 def run_app() -> int:
@@ -19,6 +28,10 @@ def run_app() -> int:
     app = QApplication(sys.argv)
     app.setApplicationName("FastLRSearch")
     app.setApplicationVersion("0.1.0")
+
+    # Ensure clean shutdown (especially important on Windows for file locks)
+    atexit.register(_cleanup)
+    app.aboutToQuit.connect(_cleanup)
 
     # Apply dark theme
     app.setStyle("Fusion")

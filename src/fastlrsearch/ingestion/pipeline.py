@@ -285,7 +285,8 @@ class IngestionPipeline:
 
         # Filter out already processed (by path, not photo_id)
         to_process = [f for f in files if f.relative_path not in skip_paths]
-        print(f"  {len(to_process)} new, {total - len(to_process)} skipped")
+        skipped_count = total - len(to_process)
+        print(f"  {len(to_process)} new, {skipped_count} skipped")
 
         if not to_process:
             print("Nothing to process.")
@@ -300,7 +301,7 @@ class IngestionPipeline:
         prefetcher.start()
 
         start_time = time.time()
-        processed_count = len(skip_paths)
+        processed_count = skipped_count
 
         try:
             while True:
@@ -484,6 +485,13 @@ class IngestionPipeline:
         """Clear the checkpoint file."""
         if self._checkpoint_path.exists():
             self._checkpoint_path.unlink()
+
+    @staticmethod
+    def clear_checkpoint_file():
+        """Clear the checkpoint file (static version for use without instance)."""
+        checkpoint_path = settings.checkpoints_dir / "ingestion.json"
+        if checkpoint_path.exists():
+            checkpoint_path.unlink()
 
     @staticmethod
     def get_checkpoint_status() -> dict | None:

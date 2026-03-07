@@ -32,7 +32,7 @@ def _build_absolute_path(relative_path: str) -> str:
             abs_path = abs_path.replace("/", "\\")
         return abs_path
     else:
-        return str(settings.photo_root / relative_path)
+        return str(settings.photo_root / Path(relative_path))
 
 
 class HealthResponse(BaseModel):

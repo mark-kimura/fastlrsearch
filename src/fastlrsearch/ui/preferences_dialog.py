@@ -158,9 +158,11 @@ class PreferencesDialog(QDialog):
         layout.addStretch()
 
         # Note about restart
+        from fastlrsearch.config import _config_dir
+        config_path = _config_dir() / "settings.json"
         note_label = QLabel(
             "Note: Path changes require restart to take full effect.\n"
-            "Settings saved to: ~/.config/fastlrsearch/settings.json"
+            f"Settings saved to: {config_path}"
         )
         note_label.setStyleSheet("color: #666; font-size: 11px;")
         layout.addWidget(note_label)
@@ -300,7 +302,8 @@ class PreferencesDialog(QDialog):
             return False
 
         # Save to config file
-        config_dir = Path.home() / ".config" / "fastlrsearch"
+        from fastlrsearch.config import _config_dir
+        config_dir = _config_dir()
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "settings.json"
 

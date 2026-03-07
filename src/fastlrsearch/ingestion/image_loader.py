@@ -4,6 +4,7 @@ Handles JPEG, PNG, WebP, and RAW files (CR2, DNG, NEF, ARW, RAF).
 Uses embedded previews from RAW files when available for speed.
 """
 
+import sys
 from io import BytesIO
 from pathlib import Path
 
@@ -13,8 +14,8 @@ from PIL import Image
 
 from fastlrsearch.config import settings
 
-# RAW extensions that need special handling
-RAW_EXTENSIONS = {".cr2", ".dng", ".nef", ".arw", ".raf"}
+# RAW extensions that need special handling (from config for consistency)
+RAW_EXTENSIONS = set(settings.raw_extensions)
 
 # EXIF orientation to PIL transpose operation
 ORIENTATION_TRANSFORMS = {
@@ -59,6 +60,27 @@ def apply_orientation(img: Image.Image, orientation: int) -> Image.Image:
     return img
 
 
+def _suppress_stderr():
+    """Context manager to suppress stderr (silences libraw C library messages)."""
+    import contextlib
+    import os
+
+    @contextlib.contextmanager
+    def _suppressed():
+        stderr_fd = sys.stderr.fileno()
+        old_stderr = os.dup(stderr_fd)
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        os.dup2(devnull, stderr_fd)
+        try:
+            yield
+        finally:
+            os.dup2(old_stderr, stderr_fd)
+            os.close(old_stderr)
+            os.close(devnull)
+
+    return _suppressed()
+
+
 def load_raw_preview(filepath: Path) -> Image.Image | None:
     """Extract embedded preview from RAW file.
 
@@ -74,7 +96,7 @@ def load_raw_preview(filepath: Path) -> Image.Image | None:
     import rawpy
 
     try:
-        with rawpy.imread(str(filepath)) as raw:
+        with _suppress_stderr(), rawpy.imread(str(filepath)) as raw:
             # Try to extract embedded thumbnail first (fastest)
             try:
                 thumb = raw.extract_thumb()
@@ -116,8 +138,11 @@ def load_image(filepath: Path, target_size: int | None = None) -> Image.Image | 
         if ext in RAW_EXTENSIONS:
             img = load_raw_preview(filepath)
             if img is None:
-                return None
-            # RAW files also have EXIF orientation - read and apply it
+                # rawpy failed — fall back to PIL (may work for some formats)
+                try:
+                    img = Image.open(filepath)
+                except Exception:
+                    return None
             orientation = get_exif_orientation(filepath)
         else:
             img = Image.open(filepath)
