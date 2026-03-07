@@ -10,8 +10,9 @@ Fast offline semantic photo search for large photo libraries. Find photos by des
 - **Image similarity** - Find visually similar photos by drag & drop or clicking "Find Similar"
 - **Lightroom Classic integration** - Search directly from Lightroom via plugin
 - **Multilingual** - Search in English, Japanese, Chinese, and other languages (SigLIP 2 is multilingual)
-- **RAW support** - Indexes CR2, DNG, NEF, ARW, RAF alongside JPG/PNG
+- **RAW support** - Indexes CR2, CR3, DNG, NEF, ARW, RAF, RW2, ORF alongside JPG/PNG/WebP
 - **Offline & private** - Everything runs locally, no cloud services required
+- **Smart RAW+JPEG handling** - Automatically skips JPEGs when a RAW counterpart exists
 - **Large library support** - Designed for 100K+ photos with background indexing
 
 ## How It Works

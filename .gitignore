@@ -65,6 +65,19 @@ consensus_config.json
 # Archive (old specs/plans)
 archive/
 
+# Local launcher/desktop files (contain hardcoded paths)
+run.sh
+*.desktop
+
+# Redundant (pyproject.toml is the source of truth)
+requirements.txt
+
+# Tests
+tests/
+
+# One-off dev scripts
+scripts/test_cuda_packaging.py
+
 # Claude Code
 CLAUDE.md
 .claude/
