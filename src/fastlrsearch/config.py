@@ -41,7 +41,7 @@ class Settings(BaseSettings):
 
     # === Paths ===
     photo_root: Path = Field(
-        default=Path("/mnt/CT400T705SSD3/Pictures"),
+        default=Path.home() / "Pictures",
         description="Root directory containing photos to index",
     )
     data_dir_override: Path | None = Field(

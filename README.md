@@ -67,7 +67,16 @@ FastLRSearch uses [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch1
 
 Settings are stored in `~/.config/fastlrsearch/settings.json`.
 
-Index data is stored in `<photo_root>/.fastlrsearch/` by default (portable with your photos).
+### Data Storage
+
+Index data is stored in `<photo_root>/.fastlrsearch/` by default, keeping it portable with your photos. This includes:
+
+- `qdrant/` — vector database (~1KB per photo)
+- `index.db` — photo metadata (SQLite)
+- `thumbnails/` — 512px WebP thumbnails for fast preview
+- `checkpoints/` — resume data for interrupted indexing
+
+To store index data separately, set `data_dir_override` in settings or via `FASTLRSEARCH_DATA_DIR_OVERRIDE` environment variable.
 
 ## Lightroom Classic Plugin
 
