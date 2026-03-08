@@ -103,9 +103,16 @@ class Embedder:
                 torch_dtype="auto",
             )
             self._model = self._model.to(self.device)
-        self._model.eval()
+        self._model.train(False)
 
-        print(f"Model loaded. Embedding dim: {settings.embedding_dim}")
+        # On CPU, set batch size to core count (no GPU parallelism to exploit)
+        if self.device == "cpu":
+            import os
+            cpu_batch = os.cpu_count() or 8
+            self._current_batch_size = cpu_batch
+            print(f"CPU mode: batch size set to {cpu_batch} (core count)")
+
+        print(f"Model loaded on {self.device}. Embedding dim: {settings.embedding_dim}")
 
     def unload(self):
         """Unload model from memory."""
