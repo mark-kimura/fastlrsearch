@@ -72,23 +72,30 @@ class Embedder:
                 torch_dtype="auto",
             )
         elif self.device == "mps":
-            # MPS: try float16 on GPU, fall back to CPU if buffer too large
-            try:
+            # MPS: check if enough GPU memory for this model (~4GB in float16)
+            # Metal's MPS abort on too-large buffers is a C++ SIGABRT that
+            # cannot be caught by Python try/except, so we must check upfront.
+            recommended = torch.mps.recommended_max_memory()
+            model_size_estimate = 4 * 1024 * 1024 * 1024  # ~4GB for this model in fp16
+            if recommended >= model_size_estimate * 1.5:
+                # Enough memory: use device_map to load directly to MPS
+                # (avoids 2x memory spike from CPU load + .to("mps") copy)
+                print(f"MPS recommended max memory: {recommended / 1024**3:.1f} GiB, loading to GPU...")
                 self._model = AutoModel.from_pretrained(
                     self.model_name,
                     torch_dtype=torch.float16,
+                    device_map="mps",
+                    low_cpu_mem_usage=True,
                 )
-                self._model = self._model.to(self.device)
-            except RuntimeError as e:
-                if "invalid buffer size" in str(e):
-                    print(f"MPS buffer limit hit, falling back to CPU (still fast on Apple Silicon)")
-                    self.device = "cpu"
-                    self._model = AutoModel.from_pretrained(
-                        self.model_name,
-                        torch_dtype=torch.float32,
-                    )
-                else:
-                    raise
+            else:
+                # Not enough MPS memory (e.g. 8GB Mac): use CPU
+                print(f"MPS recommended max memory: {recommended / 1024**3:.1f} GiB (too small for model), using CPU")
+                self.device = "cpu"
+                self._model = AutoModel.from_pretrained(
+                    self.model_name,
+                    torch_dtype=torch.float32,
+                    low_cpu_mem_usage=True,
+                )
         else:
             # CPU: load with auto dtype
             self._model = AutoModel.from_pretrained(
