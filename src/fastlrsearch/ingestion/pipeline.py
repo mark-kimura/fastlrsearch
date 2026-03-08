@@ -290,12 +290,18 @@ class IngestionPipeline:
 
         files = list(scan_directory(progress_callback=_scan_progress))
         total = len(files)
-        print(f"Found {total} photos")
+        msg = f"Found {total:,} photos"
+        print(msg)
+        if self._on_status:
+            self._on_status(msg)
 
         # Filter out already processed (by path, not photo_id)
         to_process = [f for f in files if f.relative_path not in skip_paths]
         skipped_count = total - len(to_process)
+        msg = f"Found {total:,} photos, {len(to_process):,} new, {skipped_count:,} skipped"
         print(f"  {len(to_process)} new, {skipped_count} skipped")
+        if self._on_status:
+            self._on_status(msg)
 
         if not to_process:
             print("Nothing to process.")
