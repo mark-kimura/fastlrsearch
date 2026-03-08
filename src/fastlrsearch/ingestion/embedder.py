@@ -71,8 +71,15 @@ class Embedder:
                 device_map="cuda",
                 torch_dtype="auto",
             )
+        elif self.device == "mps":
+            # MPS: use float16 to avoid "invalid buffer size" on Apple Silicon
+            self._model = AutoModel.from_pretrained(
+                self.model_name,
+                torch_dtype=torch.float16,
+            )
+            self._model = self._model.to(self.device)
         else:
-            # MPS and CPU: load to CPU first, then move (device_map not supported for MPS)
+            # CPU: load with auto dtype
             self._model = AutoModel.from_pretrained(
                 self.model_name,
                 torch_dtype="auto",
