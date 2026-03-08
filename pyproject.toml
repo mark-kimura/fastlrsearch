@@ -45,6 +45,9 @@ dependencies = [
     "uvicorn>=0.27.0",
     "python-multipart>=0.0.6",  # Required for file uploads
 
+    # macOS app menu name
+    "pyobjc-framework-Cocoa>=9.0 ; sys_platform == 'darwin'",
+
     # Utilities
     "tqdm>=4.66.0",
     "pydantic>=2.5.0",
