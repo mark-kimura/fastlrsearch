@@ -208,6 +208,8 @@ class MainWindow(QMainWindow):
         self.status_bar.addWidget(self.progress_bar)
 
     def _setup_menu(self):
+        import sys
+        is_macos = sys.platform == "darwin"
         menu_bar = self.menuBar()
 
         # File menu
@@ -216,6 +218,9 @@ class MainWindow(QMainWindow):
         prefs_action = QAction("Preferences...", self)
         prefs_action.setShortcut("Ctrl+,")
         prefs_action.triggered.connect(self._show_preferences)
+        if is_macos:
+            # Let macOS move this to the app menu (standard Mac UX)
+            prefs_action.setMenuRole(QAction.MenuRole.PreferencesRole)
         file_menu.addAction(prefs_action)
 
         file_menu.addSeparator()
@@ -223,27 +228,52 @@ class MainWindow(QMainWindow):
         quit_action = QAction("Quit", self)
         quit_action.setShortcut("Ctrl+Q")
         quit_action.triggered.connect(self.close)
+        if is_macos:
+            quit_action.setMenuRole(QAction.MenuRole.QuitRole)
         file_menu.addAction(quit_action)
 
-        # Tools menu
-        tools_menu = menu_bar.addMenu("Tools")
+        if is_macos:
+            # On macOS, Preferences and Quit move to the app menu,
+            # so add Index Statistics to File to keep it non-empty
+            stats_action = QAction("Index Statistics...", self)
+            stats_action.triggered.connect(self._show_stats)
+            file_menu.addAction(stats_action)
 
-        stats_action = QAction("Index Statistics...", self)
-        stats_action.triggered.connect(self._show_stats)
-        tools_menu.addAction(stats_action)
+            file_menu.addSeparator()
 
-        tools_menu.addSeparator()
+            copy_token_action = QAction("Copy API Token", self)
+            copy_token_action.triggered.connect(self._copy_api_token)
+            file_menu.addAction(copy_token_action)
+        else:
+            # Tools menu (Linux/Windows only - on macOS these go in File)
+            tools_menu = menu_bar.addMenu("Tools")
 
-        copy_token_action = QAction("Copy API Token", self)
-        copy_token_action.triggered.connect(self._copy_api_token)
-        tools_menu.addAction(copy_token_action)
+            stats_action = QAction("Index Statistics...", self)
+            stats_action.triggered.connect(self._show_stats)
+            tools_menu.addAction(stats_action)
+
+            tools_menu.addSeparator()
+
+            copy_token_action = QAction("Copy API Token", self)
+            copy_token_action.triggered.connect(self._copy_api_token)
+            tools_menu.addAction(copy_token_action)
 
         # Help menu
         help_menu = menu_bar.addMenu("Help")
 
-        about_action = QAction("About", self)
+        about_action = QAction("About FastLRSearch", self)
         about_action.triggered.connect(self._show_about)
+        if is_macos:
+            # Let macOS move this to the app menu (standard Mac UX)
+            about_action.setMenuRole(QAction.MenuRole.AboutRole)
         help_menu.addAction(about_action)
+
+        if is_macos:
+            # Add a visible item so Help menu isn't empty on macOS
+            help_action = QAction("FastLRSearch Help", self)
+            help_action.triggered.connect(self._show_about)
+            help_action.setMenuRole(QAction.MenuRole.NoRole)
+            help_menu.addAction(help_action)
 
     def _load_model_async(self):
         """Load embedding model in background."""

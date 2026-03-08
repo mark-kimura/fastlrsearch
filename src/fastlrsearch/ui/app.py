@@ -27,6 +27,7 @@ def run_app() -> int:
     # Create Qt application
     app = QApplication(sys.argv)
     app.setApplicationName("FastLRSearch")
+    app.setApplicationDisplayName("FastLRSearch")
     app.setApplicationVersion("0.1.0")
 
     # Ensure clean shutdown (especially important on Windows for file locks)
