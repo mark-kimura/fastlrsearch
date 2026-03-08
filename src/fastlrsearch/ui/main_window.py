@@ -256,10 +256,14 @@ class MainWindow(QMainWindow):
 
     def _on_model_status(self, message: str):
         """Handle model loading status update."""
-        self.status_label.setText(message)
+        # Don't overwrite status if indexing is already running
+        if self._ingestion_worker is None:
+            self.status_label.setText(message)
 
     def _on_model_loaded(self, message: str):
-        self.status_label.setText("Ready")
+        # Don't overwrite status if indexing is already running
+        if self._ingestion_worker is None:
+            self.status_label.setText("Ready")
 
     def _on_model_error(self, error: str):
         self.status_label.setText(f"Model error: {error}")

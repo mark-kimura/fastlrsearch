@@ -121,8 +121,7 @@ class Embedder:
             del self._processor
             self._model = None
             self._processor = None
-            if self.device == "cuda" and torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            self._clear_memory()
 
     def embed_image(self, image: Image.Image) -> np.ndarray:
         """Embed a single image.
@@ -161,7 +160,9 @@ class Embedder:
                 try:
                     batch_embeddings = self._embed_batch(batch)
                     embeddings.extend(batch_embeddings)
-                except torch.cuda.OutOfMemoryError:
+                except (torch.cuda.OutOfMemoryError, RuntimeError) as e:
+                    if isinstance(e, RuntimeError) and "out of memory" not in str(e).lower():
+                        raise  # Not an OOM error, re-raise
                     # OOM: reduce batch size and retry
                     self._handle_oom()
                     # Retry with smaller batch size
@@ -193,6 +194,14 @@ class Embedder:
         embeddings = outputs / outputs.norm(dim=-1, keepdim=True)
         return [emb.cpu().numpy().astype(np.float32) for emb in embeddings]
 
+    def _clear_memory(self):
+        """Clear GPU memory cache if available."""
+        if self.device == "cuda" and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        elif self.device == "mps":
+            torch.mps.empty_cache()
+        # CPU: no cache to clear
+
     def _embed_batch_safe(self, images: Sequence[Image.Image]) -> list[np.ndarray]:
         """Embed batch with automatic retry on OOM.
 
@@ -206,15 +215,17 @@ class Embedder:
             try:
                 batch_embeddings = self._embed_batch(batch)
                 embeddings.extend(batch_embeddings)
-            except torch.cuda.OutOfMemoryError:
+            except (torch.cuda.OutOfMemoryError, RuntimeError) as e:
+                if isinstance(e, RuntimeError) and "out of memory" not in str(e).lower():
+                    raise
                 # Process one at a time as last resort
-                torch.cuda.empty_cache()
+                self._clear_memory()
                 for img in batch:
                     try:
                         emb = self._embed_batch([img])
                         embeddings.extend(emb)
-                    except torch.cuda.OutOfMemoryError:
-                        print(f"Warning: OOM even with single image, skipping")
+                    except (torch.cuda.OutOfMemoryError, RuntimeError):
+                        print("Warning: OOM even with single image, skipping")
                         # Return zero vector as placeholder
                         embeddings.append(np.zeros(settings.embedding_dim, dtype=np.float32))
 
@@ -222,7 +233,7 @@ class Embedder:
 
     def _handle_oom(self):
         """Handle OOM by reducing batch size."""
-        torch.cuda.empty_cache()
+        self._clear_memory()
 
         old_size = self._current_batch_size
         self._current_batch_size = max(settings.batch_size_min, old_size // 2)

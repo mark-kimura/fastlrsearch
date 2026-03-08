@@ -316,10 +316,12 @@ class IngestionPipeline:
         if self._on_status:
             self._on_status(msg)
 
+        import os
+        num_workers = min(os.cpu_count() or 8, 16)
         prefetcher = BatchPrefetcher(
             files=to_process,
             batch_size=self._current_batch_size,
-            num_workers=12,
+            num_workers=num_workers,
         )
         prefetcher.start()
 
@@ -453,7 +455,11 @@ class IngestionPipeline:
             except (torch.cuda.OutOfMemoryError, RuntimeError) as e:
                 if "out of memory" in str(e).lower():
                     print(f"OOM with batch_size={batch_size}, reducing...")
-                    torch.cuda.empty_cache()
+                    # Clear GPU cache if available
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+                    elif hasattr(torch, "mps") and hasattr(torch.mps, "empty_cache"):
+                        torch.mps.empty_cache()
                     self._current_batch_size = max(settings.batch_size_min, batch_size // 2)
                     continue
                 raise
