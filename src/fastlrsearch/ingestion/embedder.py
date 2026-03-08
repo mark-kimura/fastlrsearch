@@ -72,12 +72,23 @@ class Embedder:
                 torch_dtype="auto",
             )
         elif self.device == "mps":
-            # MPS: use float16 to avoid "invalid buffer size" on Apple Silicon
-            self._model = AutoModel.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16,
-            )
-            self._model = self._model.to(self.device)
+            # MPS: try float16 on GPU, fall back to CPU if buffer too large
+            try:
+                self._model = AutoModel.from_pretrained(
+                    self.model_name,
+                    torch_dtype=torch.float16,
+                )
+                self._model = self._model.to(self.device)
+            except RuntimeError as e:
+                if "invalid buffer size" in str(e):
+                    print(f"MPS buffer limit hit, falling back to CPU (still fast on Apple Silicon)")
+                    self.device = "cpu"
+                    self._model = AutoModel.from_pretrained(
+                        self.model_name,
+                        torch_dtype=torch.float32,
+                    )
+                else:
+                    raise
         else:
             # CPU: load with auto dtype
             self._model = AutoModel.from_pretrained(
