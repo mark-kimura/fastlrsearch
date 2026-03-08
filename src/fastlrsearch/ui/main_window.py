@@ -688,9 +688,20 @@ class MainWindow(QMainWindow):
         if self._ingestion_worker:
             self._ingestion_worker.cancel()
 
+        # Wait for thread pool workers to finish
+        self._thread_pool.waitForDone(5000)  # 5 second timeout
+
+        # Close stores to release Qdrant/SQLite threads and file locks
+        from fastlrsearch.indexing import close_qdrant_store, close_sqlite_store
+        close_qdrant_store()
+        close_sqlite_store()
+
+        # Unload model to release any inference threads
+        from fastlrsearch.ingestion.embedder import unload_embedder
+        unload_embedder()
+
         # Stop API server if running
         from fastlrsearch.api import stop_server
-
         stop_server()
 
         event.accept()
