@@ -233,15 +233,18 @@ class IngestionPipeline:
         self,
         embedder: Embedder | None = None,
         on_progress: Callable[[int, int], None] | None = None,
+        on_status: Callable[[str], None] | None = None,
     ):
         """Initialize pipeline.
 
         Args:
             embedder: Embedder instance (uses global singleton if None)
             on_progress: Callback(processed, total) for progress updates
+            on_status: Callback(message) for status text updates
         """
         self._embedder = embedder
         self._on_progress = on_progress
+        self._on_status = on_status
         self._checkpoint_path = settings.checkpoints_dir / "ingestion.json"
         self._current_batch_size = settings.batch_size
         self._thumbnail_gen = ThumbnailGenerator(num_workers=4)
@@ -279,7 +282,13 @@ class IngestionPipeline:
 
         # Scan for files
         print("Scanning for photos...")
-        files = list(scan_directory())
+        def _scan_progress(count: int):
+            msg = f"Scanning photos... ({count:,} found)"
+            print(f"  {msg}")
+            if self._on_status:
+                self._on_status(msg)
+
+        files = list(scan_directory(progress_callback=_scan_progress))
         total = len(files)
         print(f"Found {total} photos")
 
@@ -522,6 +531,7 @@ def run_ingestion(
     existing_paths: set[str] | None = None,
     on_photo: Callable[[ProcessedPhoto], None] | None = None,
     on_progress: Callable[[int, int], None] | None = None,
+    on_status: Callable[[str], None] | None = None,
 ) -> IngestionStats:
     """Run the full Stage 1 ingestion pipeline.
 
@@ -529,6 +539,7 @@ def run_ingestion(
         existing_paths: Set of relative paths already indexed (for incremental)
         on_photo: Callback for each processed photo
         on_progress: Callback(processed, total) for progress
+        on_status: Callback(message) for status text updates
 
     Returns:
         IngestionStats with summary
@@ -536,7 +547,7 @@ def run_ingestion(
     stats = IngestionStats()
     start_time = time.time()
 
-    pipeline = IngestionPipeline(on_progress=on_progress)
+    pipeline = IngestionPipeline(on_progress=on_progress, on_status=on_status)
 
     try:
         for photo in pipeline.run_stage1(existing_paths=existing_paths):

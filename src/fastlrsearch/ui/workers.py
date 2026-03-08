@@ -200,6 +200,7 @@ class IngestionWorker(QRunnable):
                 existing_paths=existing_paths,
                 on_photo=on_photo,
                 on_progress=on_progress,
+                on_status=lambda msg: self.signals.status.emit(msg),
             )
 
             self.signals.result.emit(stats)
