@@ -307,8 +307,11 @@ class IngestionPipeline:
             print("Nothing to process.")
             return
 
-        # Start prefetcher with more workers for larger batches
-        msg = f"Indexing {len(to_process):,} photos..."
+        # Sync batch size with embedder (may have been adjusted for CPU)
+        self._current_batch_size = self.embedder._current_batch_size
+
+        # Start prefetcher
+        msg = f"Indexing {len(to_process):,} photos (batch size: {self._current_batch_size})..."
         print(msg)
         if self._on_status:
             self._on_status(msg)
