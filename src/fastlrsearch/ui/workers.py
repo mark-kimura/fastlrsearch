@@ -140,16 +140,30 @@ class IngestionWorker(QRunnable):
         import time
 
         try:
+            self.signals.status.emit("Loading libraries...")
+            print("Indexing: Loading libraries...")
             from fastlrsearch.indexing import get_qdrant_store, get_sqlite_store, PhotoRecord
             from fastlrsearch.ingestion import run_ingestion
 
+            self.signals.status.emit("Preparing database...")
+            print("Indexing: Preparing database...")
             qdrant = get_qdrant_store()
             sqlite = get_sqlite_store()
 
             # Get path -> photo_id mapping for detecting changed files
+            self.signals.status.emit("Checking existing index...")
             path_to_id = sqlite.get_path_to_id_map()
             # Use paths to determine what to skip (not photo_ids which change with mtime)
             existing_paths = set(path_to_id.keys())
+
+            self.signals.status.emit("Loading model (may take a minute on first run)...")
+            print("Indexing: Loading model...")
+            from fastlrsearch.ingestion import get_embedder
+            embedder = get_embedder()
+            _ = embedder.model  # Force model load now so status is accurate
+
+            self.signals.status.emit("Scanning photos...")
+            print("Indexing: Scanning photos...")
 
             def on_progress(processed: int, total: int):
                 # Wait while paused

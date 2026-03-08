@@ -434,6 +434,7 @@ class MainWindow(QMainWindow):
         self._ingestion_worker.signals.progress.connect(self._on_ingestion_progress)
         self._ingestion_worker.signals.result.connect(self._on_ingestion_complete)
         self._ingestion_worker.signals.error.connect(self._on_ingestion_error)
+        self._ingestion_worker.signals.status.connect(self.status_label.setText)
         self._thread_pool.start(self._ingestion_worker)
 
     def _on_ingestion_progress(self, current: int, total: int):
