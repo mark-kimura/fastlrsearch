@@ -153,6 +153,10 @@ class Embedder:
         with torch.no_grad():
             outputs = self.model.get_image_features(**inputs)
 
+        # Some transformers versions return a model output object instead of a tensor
+        if not isinstance(outputs, torch.Tensor):
+            outputs = outputs.pooler_output if hasattr(outputs, "pooler_output") else outputs.last_hidden_state[:, 0]
+
         # Normalize embeddings
         embeddings = outputs / outputs.norm(dim=-1, keepdim=True)
         return [emb.cpu().numpy().astype(np.float32) for emb in embeddings]
@@ -237,6 +241,10 @@ class Embedder:
 
             with torch.no_grad():
                 outputs = self.model.get_text_features(**inputs)
+
+            # Some transformers versions return a model output object instead of a tensor
+            if not isinstance(outputs, torch.Tensor):
+                outputs = outputs.pooler_output if hasattr(outputs, "pooler_output") else outputs.last_hidden_state[:, 0]
 
             # Normalize embeddings
             embeddings = outputs / outputs.norm(dim=-1, keepdim=True)
