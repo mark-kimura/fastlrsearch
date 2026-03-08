@@ -308,6 +308,11 @@ class IngestionPipeline:
             return
 
         # Start prefetcher with more workers for larger batches
+        msg = f"Indexing {len(to_process):,} photos..."
+        print(msg)
+        if self._on_status:
+            self._on_status(msg)
+
         prefetcher = BatchPrefetcher(
             files=to_process,
             batch_size=self._current_batch_size,
