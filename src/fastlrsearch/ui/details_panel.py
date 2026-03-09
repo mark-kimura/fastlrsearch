@@ -162,7 +162,7 @@ class DetailsPanel(QFrame):
         if self._result and self._result.path:
             abs_path = settings.photo_root / self._result.path
             if abs_path.exists():
-                QDesktopServices.openUrl(QUrl.fromLocalFile(str(abs_path.parent)))
+                QDesktopServices.openUrl(QUrl.fromLocalFile(str(abs_path)))
 
     def _on_similar_clicked(self):
         """Trigger find similar search."""
