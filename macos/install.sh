@@ -28,19 +28,33 @@ echo "  $APP_NAME Installer"
 echo "========================================"
 echo ""
 
-# ── Step 1: Homebrew ──────────────────────────────────────────────
-if ! command -v brew &>/dev/null; then
+# ── Step 1: Find or install Homebrew ──────────────────────────────
+# Check PATH first, then known install locations (in case user just
+# installed Homebrew but hasn't restarted their terminal)
+if command -v brew &>/dev/null; then
+    BREW=brew
+elif [ -x "/opt/homebrew/bin/brew" ]; then
+    # Apple Silicon
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    BREW=/opt/homebrew/bin/brew
+elif [ -x "/usr/local/bin/brew" ]; then
+    # Intel Mac
+    eval "$(/usr/local/bin/brew shellenv)"
+    BREW=/usr/local/bin/brew
+else
     echo "Homebrew is required but not installed."
     echo ""
     echo "To install Homebrew first, run:"
     echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
     echo ""
-    echo "Then re-run this installer."
+    echo "Then re-run this installer:"
+    echo "  bash /tmp/fastlrsearch-install.sh"
     echo ""
     echo "Note: Your macOS user account must be an Administrator to install Homebrew."
     echo "Check: System Settings > Users & Groups"
     exit 1
 fi
+echo "Using Homebrew: $($BREW --prefix)"
 
 # ── Step 2: Python ────────────────────────────────────────────────
 NEED_PYTHON=true
@@ -55,8 +69,8 @@ fi
 
 if [ "$NEED_PYTHON" = true ]; then
     echo "Installing Python 3.12..."
-    brew install python@3.12
-    PYTHON="$(brew --prefix python@3.12)/bin/python3.12"
+    $BREW install python@3.12
+    PYTHON="$($BREW --prefix python@3.12)/bin/python3.12"
     echo ""
 fi
 
@@ -64,9 +78,9 @@ echo "Using Python: $($PYTHON --version)"
 echo ""
 
 # ── Step 2b: libraw (for RAW photo support) ──────────────────────
-if ! brew list libraw &>/dev/null; then
+if ! $BREW list libraw &>/dev/null; then
     echo "Installing libraw (for RAW photo support: CR2, DNG, NEF, ARW, etc.)..."
-    brew install libraw
+    $BREW install libraw
     echo ""
 fi
 
