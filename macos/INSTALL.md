@@ -2,8 +2,12 @@
 
 ## Prerequisites
 
-- **Homebrew**: If you don't have it, install first: https://brew.sh
 - Your macOS account must be an **Administrator** (check System Settings > Users & Groups)
+- **Homebrew**: If you don't have it, open Terminal and run:
+  ```bash
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  ```
+  This will ask for your password. More info: https://brew.sh
 
 ## Install
 

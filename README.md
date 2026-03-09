@@ -61,7 +61,11 @@ bash /tmp/fastlrsearch-install.sh
 ```
 
 This handles everything automatically — Python, libraw, the app, and optionally the Lightroom plugin.
-Requires [Homebrew](https://brew.sh) and an administrator macOS account.
+
+**Prerequisites:** An administrator macOS account and [Homebrew](https://brew.sh). If you don't have Homebrew, install it first:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
 After install, launch from **Spotlight** (Cmd+Space → "FastLRSearch") or find it in your Applications folder.
 
