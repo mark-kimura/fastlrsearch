@@ -9,7 +9,7 @@
 #
 # What this does:
 #   1. Installs Homebrew (if not installed)
-#   2. Installs Python 3.12 (if needed)
+#   2. Installs Python 3.12 and libraw (if needed)
 #   3. Installs FastLRSearch in a virtual environment
 #   4. Creates FastLRSearch.app in /Applications
 #   5. Optionally installs the Lightroom plugin
@@ -61,6 +61,13 @@ fi
 
 echo "Using Python: $($PYTHON --version)"
 echo ""
+
+# ── Step 2b: libraw (for RAW photo support) ──────────────────────
+if ! brew list libraw &>/dev/null; then
+    echo "Installing libraw (for RAW photo support: CR2, DNG, NEF, ARW, etc.)..."
+    brew install libraw
+    echo ""
+fi
 
 # ── Step 3: Clone/update repo ────────────────────────────────────
 mkdir -p "$INSTALL_DIR"
