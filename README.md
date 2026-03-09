@@ -53,7 +53,12 @@ FastLRSearch uses [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch1
 
 ### macOS
 
-Open Terminal and paste these two lines:
+Requires an administrator macOS account and [Homebrew](https://brew.sh). If you don't have Homebrew, install it first:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+Then open Terminal and paste these two lines:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh -o /tmp/fastlrsearch-install.sh
@@ -61,11 +66,6 @@ bash /tmp/fastlrsearch-install.sh
 ```
 
 This handles everything automatically — Python, libraw, the app, and optionally the Lightroom plugin.
-
-**Prerequisites:** An administrator macOS account and [Homebrew](https://brew.sh). If you don't have Homebrew, install it first:
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-```
 
 After install, launch from **Spotlight** (Cmd+Space → "FastLRSearch") or find it in your Applications folder.
 
