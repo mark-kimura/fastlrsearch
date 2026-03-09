@@ -1,16 +1,22 @@
 # Installing FastLRSearch on macOS
 
-## One-Line Install
+## Prerequisites
 
-Open Terminal and paste:
+- **Homebrew**: If you don't have it, install first: https://brew.sh
+- Your macOS account must be an **Administrator** (check System Settings > Users & Groups)
+
+## Install
+
+Open Terminal and paste these two lines:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh -o /tmp/fastlrsearch-install.sh
+bash /tmp/fastlrsearch-install.sh
 ```
 
 This handles everything automatically:
-- Installs Homebrew (if you don't have it)
-- Installs Python (if needed)
+- Installs Python 3.12 (if needed)
+- Installs libraw (for RAW photo support)
 - Installs FastLRSearch
 - Creates the app in your Applications folder
 - Optionally installs the Lightroom plugin

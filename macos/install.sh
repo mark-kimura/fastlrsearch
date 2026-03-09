@@ -1,8 +1,9 @@
 #!/bin/bash
 # FastLRSearch macOS installer
 #
-# Usage:
-#   curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh | bash
+# Usage (two steps — download first so interactive prompts work):
+#   curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh -o /tmp/fastlrsearch-install.sh
+#   bash /tmp/fastlrsearch-install.sh
 #
 # Or after cloning:
 #   ./macos/install.sh
@@ -29,16 +30,16 @@ echo ""
 
 # ── Step 1: Homebrew ──────────────────────────────────────────────
 if ! command -v brew &>/dev/null; then
-    echo "Installing Homebrew (macOS package manager)..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-    # Add Homebrew to PATH for this session
-    if [ -f "/opt/homebrew/bin/brew" ]; then
-        eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [ -f "/usr/local/bin/brew" ]; then
-        eval "$(/usr/local/bin/brew shellenv)"
-    fi
+    echo "Homebrew is required but not installed."
     echo ""
+    echo "To install Homebrew first, run:"
+    echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    echo ""
+    echo "Then re-run this installer."
+    echo ""
+    echo "Note: Your macOS user account must be an Administrator to install Homebrew."
+    echo "Check: System Settings > Users & Groups"
+    exit 1
 fi
 
 # ── Step 2: Python ────────────────────────────────────────────────
