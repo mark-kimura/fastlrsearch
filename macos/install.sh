@@ -57,17 +57,20 @@ fi
 echo "Using Homebrew: $($BREW --prefix)"
 
 # ── Step 2: Python ────────────────────────────────────────────────
-NEED_PYTHON=true
+# Prefer Homebrew Python 3.12 over system Python. System Python (e.g. 3.14)
+# may be too new for PySide6 and other dependencies.
+PYTHON=""
 
-if command -v python3 &>/dev/null; then
-    PY_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)' 2>/dev/null || echo "0")
-    if [ "$PY_MINOR" -ge 10 ]; then
-        NEED_PYTHON=false
-        PYTHON=python3
+# Check for Homebrew Python 3.12 or 3.13 first
+for ver in 3.12 3.13; do
+    brew_python="$($BREW --prefix python@$ver 2>/dev/null)/bin/python$ver"
+    if [ -x "$brew_python" ]; then
+        PYTHON="$brew_python"
+        break
     fi
-fi
+done
 
-if [ "$NEED_PYTHON" = true ]; then
+if [ -z "$PYTHON" ]; then
     echo "Installing Python 3.12..."
     $BREW install python@3.12
     PYTHON="$($BREW --prefix python@3.12)/bin/python3.12"
@@ -122,14 +125,22 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 cp "$REPO_DIR/macos/Info.plist" "$APP_BUNDLE/Contents/"
 
 # Launcher — directly uses our venv Python (no searching needed)
+# Logs errors to ~/Library/Logs/FastLRSearch.log for debugging
 cat > "$APP_BUNDLE/Contents/MacOS/$APP_NAME" << 'LAUNCHER'
 #!/bin/bash
+LOGFILE="$HOME/Library/Logs/FastLRSearch.log"
 VENV_PYTHON="$HOME/.local/share/fastlrsearch/venv/bin/python3"
+
+echo "$(date): Launching FastLRSearch..." >> "$LOGFILE"
+
 if [ ! -x "$VENV_PYTHON" ]; then
+    echo "$(date): ERROR: venv Python not found at $VENV_PYTHON" >> "$LOGFILE"
     osascript -e 'display dialog "FastLRSearch needs to be reinstalled.\n\nRun:\n  ~/.local/share/fastlrsearch/repo/macos/install.sh" with title "FastLRSearch" buttons {"OK"} default button "OK" with icon stop'
     exit 1
 fi
-exec "$VENV_PYTHON" -m fastlrsearch.main
+
+echo "$(date): Using Python: $($VENV_PYTHON --version 2>&1)" >> "$LOGFILE"
+exec "$VENV_PYTHON" -m fastlrsearch.main >> "$LOGFILE" 2>&1
 LAUNCHER
 chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
@@ -143,7 +154,26 @@ xattr -dr com.apple.quarantine "$APP_BUNDLE" 2>/dev/null || true
 
 echo ""
 
-# ── Step 6: Lightroom plugin (optional) ──────────────────────────
+# ── Step 6: CLI command ───────────────────────────────────────────
+# Create a 'fastlrsearch' command that uses our venv, not system Python
+echo "Setting up command-line tool..."
+mkdir -p "$HOME/.local/bin"
+cat > "$HOME/.local/bin/fastlrsearch" << 'CLISCRIPT'
+#!/bin/bash
+exec "$HOME/.local/share/fastlrsearch/venv/bin/fastlrsearch" "$@"
+CLISCRIPT
+chmod +x "$HOME/.local/bin/fastlrsearch"
+
+# Ensure ~/.local/bin is on PATH (for zsh)
+if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
+    echo ""
+    echo "Adding ~/.local/bin to your PATH..."
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zprofile"
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+echo ""
+
+# ── Step 7: Lightroom plugin (optional) ──────────────────────────
 read -p "Install Lightroom Classic plugin? [y/N] " -n 1 -r
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
