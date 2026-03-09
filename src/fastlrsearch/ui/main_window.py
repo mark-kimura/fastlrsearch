@@ -294,9 +294,43 @@ class MainWindow(QMainWindow):
         # Don't overwrite status if indexing is already running
         if self._ingestion_worker is None:
             self.status_label.setText("Ready")
+            self._show_welcome_if_empty()
 
     def _on_model_error(self, error: str):
         self.status_label.setText(f"Model error: {error}")
+
+    def _show_welcome_if_empty(self):
+        """Show a helpful welcome message if there's no index yet."""
+        try:
+            from fastlrsearch.indexing import get_qdrant_store
+
+            count = get_qdrant_store().count()
+            if count > 0:
+                return  # Index exists, nothing to show
+
+            # No index — check if photo_root is configured
+            import sys
+
+            shortcut = "Cmd+," if sys.platform == "darwin" else "Ctrl+,"
+            menu_path = "FastLRSearch menu" if sys.platform == "darwin" else "File menu"
+            if not settings.photo_root.exists() or settings.photo_root == Path.home() / "Pictures":
+                self.results_grid.clear(
+                    f"Welcome to FastLRSearch!\n\n"
+                    f"To get started:\n"
+                    f"1. Go to {menu_path} > Preferences ({shortcut})\n"
+                    f"2. Set your photo directory\n"
+                    f"3. Click 'Start Indexing' to build the search index\n\n"
+                    f"You can search while indexing runs in the background."
+                )
+            else:
+                self.results_grid.clear(
+                    f"No photos indexed yet.\n\n"
+                    f"Go to {menu_path} > Preferences ({shortcut})\n"
+                    f"and click 'Start Indexing' to build the search index.\n\n"
+                    f"You can search while indexing runs in the background."
+                )
+        except Exception:
+            pass  # Don't crash on startup
 
     def _check_incomplete_indexing(self):
         """Check for incomplete indexing and prompt to resume."""

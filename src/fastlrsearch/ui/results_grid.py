@@ -190,6 +190,7 @@ class ResultsGrid(QScrollArea):
         # Show empty state
         self.empty_label = QLabel(message)
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.empty_label.setWordWrap(True)
         self.empty_label.setStyleSheet("color: #888; font-size: 14px;")
         self.grid_layout.addWidget(self.empty_label, 0, 0)
 

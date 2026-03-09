@@ -51,23 +51,19 @@ FastLRSearch uses [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch1
    fastlrsearch
    ```
 
-### macOS (Apple Silicon)
+### macOS
 
-1. **Install FastLRSearch**:
-   ```bash
-   pip install -e .
-   ```
-   PyTorch with MPS (Metal) support is installed automatically.
+Open Terminal and paste:
 
-2. **(Optional) Install libraw** for RAW file support:
-   ```bash
-   brew install libraw
-   ```
+```bash
+curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh | bash
+```
 
-3. **Run**:
-   ```bash
-   fastlrsearch
-   ```
+This handles everything automatically — Homebrew, Python, the app, and optionally the Lightroom plugin.
+
+After install, launch from **Spotlight** (Cmd+Space → "FastLRSearch") or find it in your Applications folder.
+
+See [macos/INSTALL.md](macos/INSTALL.md) for details, updating, and uninstalling.
 
 ### Windows
 
@@ -144,10 +140,18 @@ See [fastlrsearch.lrplugin/README.md](fastlrsearch.lrplugin/README.md) for insta
 
 ### Quick Start
 
+**macOS** (if you used the installer above, you were already prompted for this):
+```bash
+fastlrsearch --install-lrplugin
+```
+
+**Manual install** (any platform):
 1. Copy `fastlrsearch.lrplugin` to your Lightroom plugins folder
 2. Add it via File > Plug-in Manager
-3. Copy the API token from FastLRSearch (Tools > Copy API Token) and paste it in Plugin Manager
-4. Use Library > Plug-in Extras > Search Photos or Find Similar
+
+**Then:**
+1. Copy the API token from FastLRSearch (Tools > Copy API Token) and paste it in Plugin Manager
+2. Use Library > Plug-in Extras > Search Photos or Find Similar
 
 <img src="docs/screenshot-api-token.png" width="280">
 
