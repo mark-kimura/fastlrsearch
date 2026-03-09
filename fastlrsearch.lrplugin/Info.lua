@@ -10,7 +10,7 @@ return {
     LrToolkitIdentifier = "com.fastlrsearch.lightroom",
     LrPluginName = "FastLRSearch",
 
-    LrPluginInfoUrl = "https://github.com/yourusername/fastlrsearch",
+    LrPluginInfoUrl = "https://github.com/mark-kimura/fastlrsearch",
 
     -- Plugin initialization
     LrInitPlugin = "FastLRSearchInit.lua",

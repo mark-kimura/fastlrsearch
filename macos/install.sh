@@ -1,0 +1,147 @@
+#!/bin/bash
+# FastLRSearch macOS installer
+#
+# Usage:
+#   curl -fsSL https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/macos/install.sh | bash
+#
+# Or after cloning:
+#   ./macos/install.sh
+#
+# What this does:
+#   1. Installs Homebrew (if not installed)
+#   2. Installs Python 3.12 (if needed)
+#   3. Installs FastLRSearch in a virtual environment
+#   4. Creates FastLRSearch.app in /Applications
+#   5. Optionally installs the Lightroom plugin
+
+set -e
+
+APP_NAME="FastLRSearch"
+INSTALL_DIR="$HOME/.local/share/fastlrsearch"
+VENV_DIR="$INSTALL_DIR/venv"
+REPO_URL="https://github.com/mark-kimura/fastlrsearch.git"
+REPO_DIR="$INSTALL_DIR/repo"
+
+echo "========================================"
+echo "  $APP_NAME Installer"
+echo "========================================"
+echo ""
+
+# ── Step 1: Homebrew ──────────────────────────────────────────────
+if ! command -v brew &>/dev/null; then
+    echo "Installing Homebrew (macOS package manager)..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+    # Add Homebrew to PATH for this session
+    if [ -f "/opt/homebrew/bin/brew" ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -f "/usr/local/bin/brew" ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+    echo ""
+fi
+
+# ── Step 2: Python ────────────────────────────────────────────────
+NEED_PYTHON=true
+
+if command -v python3 &>/dev/null; then
+    PY_MINOR=$(python3 -c 'import sys; print(sys.version_info.minor)' 2>/dev/null || echo "0")
+    if [ "$PY_MINOR" -ge 10 ]; then
+        NEED_PYTHON=false
+        PYTHON=python3
+    fi
+fi
+
+if [ "$NEED_PYTHON" = true ]; then
+    echo "Installing Python 3.12..."
+    brew install python@3.12
+    PYTHON="$(brew --prefix python@3.12)/bin/python3.12"
+    echo ""
+fi
+
+echo "Using Python: $($PYTHON --version)"
+echo ""
+
+# ── Step 3: Clone/update repo ────────────────────────────────────
+mkdir -p "$INSTALL_DIR"
+
+if [ -d "$REPO_DIR/.git" ]; then
+    echo "Updating FastLRSearch..."
+    git -C "$REPO_DIR" pull --ff-only 2>/dev/null || true
+else
+    echo "Downloading FastLRSearch..."
+    git clone "$REPO_URL" "$REPO_DIR"
+fi
+echo ""
+
+# ── Step 4: Virtual environment & install ─────────────────────────
+echo "Setting up virtual environment..."
+if [ ! -d "$VENV_DIR" ]; then
+    $PYTHON -m venv "$VENV_DIR"
+fi
+
+"$VENV_DIR/bin/pip" install --upgrade pip --quiet
+echo "Installing FastLRSearch (this may take a few minutes)..."
+"$VENV_DIR/bin/pip" install "$REPO_DIR" --quiet
+echo ""
+
+# ── Step 5: Create .app bundle ────────────────────────────────────
+echo "Creating $APP_NAME.app..."
+
+APP_BUNDLE="/Applications/$APP_NAME.app"
+
+# Clean previous install
+rm -rf "$APP_BUNDLE"
+
+mkdir -p "$APP_BUNDLE/Contents/MacOS"
+mkdir -p "$APP_BUNDLE/Contents/Resources"
+
+# Info.plist
+cp "$REPO_DIR/macos/Info.plist" "$APP_BUNDLE/Contents/"
+
+# Launcher — directly uses our venv Python (no searching needed)
+cat > "$APP_BUNDLE/Contents/MacOS/$APP_NAME" << 'LAUNCHER'
+#!/bin/bash
+VENV_PYTHON="$HOME/.local/share/fastlrsearch/venv/bin/python3"
+if [ ! -x "$VENV_PYTHON" ]; then
+    osascript -e 'display dialog "FastLRSearch needs to be reinstalled.\n\nRun:\n  ~/.local/share/fastlrsearch/repo/macos/install.sh" with title "FastLRSearch" buttons {"OK"} default button "OK" with icon stop'
+    exit 1
+fi
+exec "$VENV_PYTHON" -m fastlrsearch.main
+LAUNCHER
+chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
+
+# Icon
+if [ -f "$REPO_DIR/macos/AppIcon.icns" ]; then
+    cp "$REPO_DIR/macos/AppIcon.icns" "$APP_BUNDLE/Contents/Resources/"
+fi
+
+# Remove quarantine
+xattr -dr com.apple.quarantine "$APP_BUNDLE" 2>/dev/null || true
+
+echo ""
+
+# ── Step 6: Lightroom plugin (optional) ──────────────────────────
+read -p "Install Lightroom Classic plugin? [y/N] " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    LR_MODULES="$HOME/Library/Application Support/Adobe/Lightroom/Modules"
+    mkdir -p "$LR_MODULES"
+    rm -rf "$LR_MODULES/fastlrsearch.lrplugin"
+    cp -r "$REPO_DIR/fastlrsearch.lrplugin" "$LR_MODULES/fastlrsearch.lrplugin"
+    echo "Lightroom plugin installed!"
+    echo ""
+fi
+
+# ── Done ──────────────────────────────────────────────────────────
+echo "========================================"
+echo "  Installation complete!"
+echo "========================================"
+echo ""
+echo "Launch: Cmd+Space → type '$APP_NAME'"
+echo "   or: open /Applications/$APP_NAME.app"
+echo ""
+echo "First launch will download the AI model (~1.5 GB)."
+echo ""
+echo "To update later:"
+echo "  ~/.local/share/fastlrsearch/repo/macos/install.sh"
