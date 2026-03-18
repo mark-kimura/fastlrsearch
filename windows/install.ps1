@@ -23,7 +23,7 @@ $REPO_URL = "https://github.com/mark-kimura/fastlrsearch.git"
 $REPO_DIR = Join-Path $INSTALL_DIR "repo"
 $LOG_DIR = Join-Path $INSTALL_DIR "logs"
 
-# ── Step 0: Banner and logging ──────────────────────────────────
+# -- Step 0: Banner and logging ----------------------------------
 New-Item -ItemType Directory -Force -Path $LOG_DIR | Out-Null
 $LOG_FILE = Join-Path $LOG_DIR "install.log"
 
@@ -39,14 +39,14 @@ Write-Host "PowerShell: $($PSVersionTable.PSVersion)"
 Write-Host "Log:        $LOG_FILE"
 Write-Host ""
 
-# ── Helper: Refresh PATH from registry ──────────────────────────
+# -- Helper: Refresh PATH from registry --------------------------
 function Refresh-Path {
     $machinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
     $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
     $env:PATH = "$machinePath;$userPath"
 }
 
-# ── Helper: Check if winget is available ─────────────────────────
+# -- Helper: Check if winget is available -------------------------
 function Test-Winget {
     try {
         $null = Get-Command winget -ErrorAction Stop
@@ -56,7 +56,7 @@ function Test-Winget {
     }
 }
 
-# ── Step 1: Git ─────────────────────────────────────────────────
+# -- Step 1: Git -------------------------------------------------
 Write-Host "Checking for Git..." -ForegroundColor Yellow
 
 $GIT = $null
@@ -107,7 +107,7 @@ if (-not $GIT) {
 Write-Host "Using Git: $(& $GIT --version)" -ForegroundColor Green
 Write-Host ""
 
-# ── Step 2: Python 3.12 ─────────────────────────────────────────
+# -- Step 2: Python 3.12 -----------------------------------------
 Write-Host "Checking for Python 3.12..." -ForegroundColor Yellow
 
 $PYTHON = $null
@@ -186,7 +186,7 @@ if ($PYTHON -eq "py") {
 Write-Host "Using Python: $pyVersion" -ForegroundColor Green
 Write-Host ""
 
-# ── Step 3: Clone/update repo ───────────────────────────────────
+# -- Step 3: Clone/update repo -----------------------------------
 New-Item -ItemType Directory -Force -Path $INSTALL_DIR | Out-Null
 
 if (Test-Path (Join-Path $REPO_DIR ".git")) {
@@ -194,7 +194,7 @@ if (Test-Path (Join-Path $REPO_DIR ".git")) {
     try {
         & $GIT -C $REPO_DIR pull --ff-only 2>&1 | Out-Null
     } catch {
-        Write-Host "  (git pull skipped — may have local changes)" -ForegroundColor DarkYellow
+        Write-Host "  (git pull skipped - may have local changes)" -ForegroundColor DarkYellow
     }
 } else {
     Write-Host "Downloading FastLRSearch..." -ForegroundColor Yellow
@@ -202,7 +202,7 @@ if (Test-Path (Join-Path $REPO_DIR ".git")) {
 }
 Write-Host ""
 
-# ── Step 4: Virtual environment ──────────────────────────────────
+# -- Step 4: Virtual environment ----------------------------------
 Write-Host "Setting up virtual environment..." -ForegroundColor Yellow
 
 $VENV_PYTHON = Join-Path $VENV_DIR "Scripts\python.exe"
@@ -230,7 +230,7 @@ $venvCheck = & $VENV_PYTHON -c "import sys; print(sys.executable)" 2>&1
 Write-Host "  Venv Python: $venvCheck" -ForegroundColor DarkGray
 Write-Host ""
 
-# ── Step 5: PyTorch ──────────────────────────────────────────────
+# -- Step 5: PyTorch ----------------------------------------------
 Write-Host "Checking for NVIDIA GPU..." -ForegroundColor Yellow
 
 $hasNvidia = $false
@@ -261,7 +261,7 @@ if ($installCuda) {
 }
 Write-Host ""
 
-# ── Step 6: Install FastLRSearch ─────────────────────────────────
+# -- Step 6: Install FastLRSearch ---------------------------------
 Write-Host "Installing FastLRSearch (this may take a few minutes)..." -ForegroundColor Yellow
 & $VENV_PIP install --upgrade pip --quiet 2>&1 | Out-Null
 & $VENV_PIP install --no-cache-dir $REPO_DIR 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
@@ -275,7 +275,7 @@ if ($healthCheck -ne "ok") {
 }
 Write-Host ""
 
-# ── Step 7: Launcher ─────────────────────────────────────────────
+# -- Step 7: Launcher ---------------------------------------------
 Write-Host "Setting up launcher..." -ForegroundColor Yellow
 
 $launcherSrc = Join-Path $REPO_DIR "windows\launcher.pyw"
@@ -286,7 +286,7 @@ if (Test-Path $launcherSrc) {
     Write-Host "  WARNING: launcher.pyw not found in repo, skipping." -ForegroundColor Yellow
 }
 
-# ── Step 8: Start Menu shortcut ──────────────────────────────────
+# -- Step 8: Start Menu shortcut ----------------------------------
 Write-Host "Creating Start Menu shortcut..." -ForegroundColor Yellow
 
 $startMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
@@ -311,7 +311,7 @@ $shortcut.Save()
 Write-Host "  Shortcut: $shortcutPath" -ForegroundColor DarkGray
 Write-Host ""
 
-# ── Step 9: CLI wrapper ──────────────────────────────────────────
+# -- Step 9: CLI wrapper ------------------------------------------
 Write-Host "Setting up CLI command..." -ForegroundColor Yellow
 
 $cmdSrc = Join-Path $REPO_DIR "windows\fastlrsearch.cmd"
@@ -338,7 +338,7 @@ if ($INSTALL_DIR -notin $pathEntries) {
 }
 Write-Host ""
 
-# ── Step 10: Lightroom plugin (optional) ─────────────────────────
+# -- Step 10: Lightroom plugin (optional) -------------------------
 $lrPluginSrc = Join-Path $REPO_DIR "fastlrsearch.lrplugin"
 if (Test-Path $lrPluginSrc) {
     $response = Read-Host "Install Lightroom Classic plugin? [y/N]"
@@ -355,7 +355,7 @@ if (Test-Path $lrPluginSrc) {
     }
 }
 
-# ── Done ─────────────────────────────────────────────────────────
+# -- Done ---------------------------------------------------------
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Green
 Write-Host "  Installation complete!" -ForegroundColor Green
