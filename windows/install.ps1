@@ -252,6 +252,11 @@ if ($hasNvidia) {
 }
 
 Write-Host ""
+# pip writes progress/warnings to stderr; PowerShell treats stderr as errors
+# with $ErrorActionPreference=Stop, so temporarily switch to Continue for pip calls.
+$savedEAP = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+
 if ($installCuda) {
     Write-Host "Installing PyTorch with CUDA support (this may take several minutes)..." -ForegroundColor Yellow
     & $VENV_PIP install torch torchvision --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
@@ -265,6 +270,8 @@ Write-Host ""
 Write-Host "Installing FastLRSearch (this may take a few minutes)..." -ForegroundColor Yellow
 & $VENV_PIP install --upgrade pip --quiet 2>&1 | Out-Null
 & $VENV_PIP install --no-cache-dir $REPO_DIR 2>&1 | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray }
+
+$ErrorActionPreference = $savedEAP
 
 # Health check
 Write-Host "Verifying installation..." -ForegroundColor Yellow
