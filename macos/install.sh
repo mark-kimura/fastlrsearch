@@ -140,6 +140,16 @@ if [ ! -x "$VENV_PYTHON" ]; then
 fi
 
 echo "$(date): Using Python: $($VENV_PYTHON --version 2>&1)" >> "$LOGFILE"
+echo "$(date): Arch: $(uname -m)" >> "$LOGFILE"
+
+# On Apple Silicon, ensure we run natively (not under Rosetta).
+# macOS may launch .app shell scripts under x86_64 by default,
+# causing arm64 Python packages to fail with architecture mismatch.
+if [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ] && [ "$(uname -m)" = "x86_64" ]; then
+    echo "$(date): Rosetta detected, re-launching as arm64..." >> "$LOGFILE"
+    exec arch -arm64 "$VENV_PYTHON" -m fastlrsearch.main >> "$LOGFILE" 2>&1
+fi
+
 exec "$VENV_PYTHON" -m fastlrsearch.main >> "$LOGFILE" 2>&1
 LAUNCHER
 chmod +x "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
