@@ -50,15 +50,20 @@ def create_icon_image(size: int) -> Image.Image:
 
     # "F" letter inside the magnifying glass
     font_size = int(r * 1.2)
-    try:
-        font = ImageFont.truetype("/System/Library/Fonts/Helvetica.ttc", font_size)
-    except (OSError, IOError):
+    font_paths = [
+        "/System/Library/Fonts/Helvetica.ttc",          # macOS
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux
+        "C:\\Windows\\Fonts\\arial.ttf",                 # Windows
+    ]
+    font = None
+    for fp in font_paths:
         try:
-            font = ImageFont.truetype(
-                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size
-            )
+            font = ImageFont.truetype(fp, font_size)
+            break
         except (OSError, IOError):
-            font = ImageFont.load_default()
+            continue
+    if font is None:
+        font = ImageFont.load_default()
 
     bbox = draw.textbbox((0, 0), "F", font=font)
     tw = bbox[2] - bbox[0]
@@ -75,6 +80,7 @@ def create_icon_image(size: int) -> Image.Image:
 
 def main():
     script_dir = Path(__file__).parent
+    project_root = script_dir.parent
     output_icns = script_dir / "AppIcon.icns"
 
     # Pillow can save .icns directly on any platform.
@@ -89,6 +95,19 @@ def main():
         append_images=images[:-1],
     )
     print(f"Created {output_icns}")
+
+    # Save as .ico for Windows (sizes up to 256px)
+    ico_sizes = [16, 32, 48, 64, 128, 256]
+    ico_images = [create_icon_image(s) for s in ico_sizes]
+    windows_dir = project_root / "windows"
+    windows_dir.mkdir(exist_ok=True)
+    output_ico = windows_dir / "FastLRSearch.ico"
+    ico_images[-1].save(
+        output_ico,
+        format="ICO",
+        append_images=ico_images[:-1],
+    )
+    print(f"Created {output_ico}")
 
     # Also save a PNG preview
     output_png = script_dir / "AppIcon_512.png"

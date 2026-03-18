@@ -15,10 +15,17 @@ def _install_lrplugin():
     if not plugin_src.is_dir():
         print("Error: Lightroom plugin not found.")
         print("Copy fastlrsearch.lrplugin manually to:")
-        print("  ~/Library/Application Support/Adobe/Lightroom/Modules/")
+        if sys.platform == "win32":
+            print("  %APPDATA%\\Adobe\\Lightroom\\Modules\\")
+        else:
+            print("  ~/Library/Application Support/Adobe/Lightroom/Modules/")
         sys.exit(1)
 
-    dest_base = Path.home() / "Library/Application Support/Adobe/Lightroom/Modules"
+    if sys.platform == "win32":
+        import os
+        dest_base = Path(os.environ["APPDATA"]) / "Adobe/Lightroom/Modules"
+    else:
+        dest_base = Path.home() / "Library/Application Support/Adobe/Lightroom/Modules"
     dest_base.mkdir(parents=True, exist_ok=True)
     dest = dest_base / "fastlrsearch.lrplugin"
 

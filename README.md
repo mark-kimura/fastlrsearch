@@ -73,21 +73,17 @@ See [macos/INSTALL.md](macos/INSTALL.md) for details, updating, and uninstalling
 
 ### Windows
 
-1. **Install PyTorch with CUDA** (if you have an NVIDIA GPU):
-   ```bash
-   # Visit https://pytorch.org/get-started/locally/ for your CUDA version
-   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-   ```
+Open PowerShell and paste:
 
-2. **Install FastLRSearch**:
-   ```bash
-   pip install -e .
-   ```
+```powershell
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/mark-kimura/fastlrsearch/master/windows/install.ps1 -OutFile $env:TEMP\fastlrsearch-install.ps1; & $env:TEMP\fastlrsearch-install.ps1"
+```
 
-3. **Run**:
-   ```bash
-   fastlrsearch
-   ```
+This handles everything — Python, Git, CUDA PyTorch (if you have an NVIDIA GPU), the app, and optionally the Lightroom plugin.
+
+After install, launch from **Start Menu** (Windows key → "FastLRSearch").
+
+See [windows/INSTALL.md](windows/INSTALL.md) for details, updating, and uninstalling.
 
 ## Usage
 
